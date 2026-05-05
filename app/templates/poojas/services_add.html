@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Add Pooja Service{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">Add Pooja Service</div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label>Pooja Name (Malayalam) *</label>
+                        <input type="text" name="malayalam_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Pooja Name (English) *</label>
+                        <input type="text" name="english_name" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Category *</label>
+                            <select name="category" class="form-select" required>
+                                <option value="Daily Archana">Daily Archana</option>
+                                <option value="Special Pooja">Special Pooja</option>
+                                <option value="Homam">Homam</option>
+                                <option value="Festival">Festival</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Default Price (₹) *</label>
+                            <input type="number" name="default_price" class="form-control" step="1" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Duration (minutes) *</label>
+                            <input type="number" name="duration_minutes" class="form-control" value="30" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Max Bookings per Day *</label>
+                            <input type="number" name="max_bookings_per_day" class="form-control" value="10" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" name="requires_priest" class="form-check-input" id="requiresPriest" checked>
+                        <label class="form-check-label" for="requiresPriest">Requires Priest</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Service</button>
+                    <a href="{{ url_for('poojas.services_list') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

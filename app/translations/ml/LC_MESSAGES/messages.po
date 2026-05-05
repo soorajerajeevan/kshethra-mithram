@@ -1,0 +1,73 @@
+# Malayalam translations for Temple Management System
+# Copyright (C) 2024
+# This file is distributed under the same license as the Temple Management System project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Temple Management System 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-04 18:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Malayalam\n"
+"Language: ml\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Temple Management System"
+msgstr "ക്ഷേത്ര മാനേജ്മെന്റ് സിസ്റ്റം"
+
+msgid "Login"
+msgstr "ലോഗിൻ ചെയ്യുക"
+
+msgid "Username"
+msgstr "ഉപയോഗിക്കാരന്റെ പേര്"
+
+msgid "Password"
+msgstr "പാസ്‌വേഡ്"
+
+msgid "Remember me"
+msgstr "എന്നെ ഓർത്തിരിക്കുക"
+
+msgid "Invalid username or password"
+msgstr "അസാധുവായ ഉപയോഗിക്കാരന്റെ പേരോ പാസ്‌വേഡോ"
+
+msgid "Welcome back, %(name)s!"
+msgstr "നിങ്ങളെ സ്വാഗതം, %(name)s!"
+
+msgid "Please log in to access this page."
+msgstr "ഈ പേജ് ആക്സസ് ചെയ്യുന്നതിന് ദയവായി ലോഗിൻ ചെയ്യുക."
+
+msgid "You have been logged out successfully."
+msgstr "നിങ്ങൾ വിജയകരമായി ലോഗ് ഔട്ട് ചെയ്യപ്പെട്ടു."
+
+msgid "Dashboard"
+msgstr "ഡാഷ്‌ബോർഡ്"
+
+msgid "Devotees"
+msgstr "ഭക്തർ"
+
+msgid "Billing"
+msgstr "ബില്ലിംഗ്"
+
+msgid "Poojas"
+msgstr "പൂജകൾ"
+
+msgid "Inventory"
+msgstr "ഇൻവെന്ററി"
+
+msgid "Reports"
+msgstr "റിപ്പോർട്ടുകൾ"
+
+msgid "Settings"
+msgstr "ക്രമീകരണങ്ങൾ"
+
+msgid "Logout"
+msgstr "ലോഗ് ഔട്ട്"
+
+msgid "May the divine guide your work"
+msgstr "ദിവ്യം നിങ്ങളുടെ കാര്യത്തെ നയിക്കട്ടെ"
+
+msgid "Default credentials: admin / admin123"
+msgstr "സ്ഥിരതാമസമായ വിവരങ്ങൾ: admin / admin123"

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Booking Calendar{% endblock %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2><i class="bi bi-calendar-range"></i> Booking Calendar - {{ month }}/{{ year }}</h2>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body">
+        <p class="text-muted">Calendar view feature - Displaying bookings for {{ month }}/{{ year }}</p>
+        <div class="alert alert-info">
+            <strong>Upcoming Feature:</strong> Interactive calendar view will be available soon.
+            For now, please use the <a href="{{ url_for('poojas.bookings_list') }}">bookings list</a> view.
+        </div>
+    </div>
+</div>
+{% endblock %}

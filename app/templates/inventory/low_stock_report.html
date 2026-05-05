@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Low Stock Report{% endblock %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2><i class="bi bi-exclamation-triangle text-warning"></i> Low Stock Report</h2>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead><tr><th>Item</th><th>Category</th><th>Current Stock</th><th>Reorder Level</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for item in items %}
+                <tr class="table-warning">
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.category }}</td>
+                    <td><strong>{{ item.current_stock }} {{ item.unit }}</strong></td>
+                    <td>{{ item.reorder_level }} {{ item.unit }}</td>
+                    <td>
+                        <a href="{{ url_for('inventory.stock_in', id=item.id) }}" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus"></i> Restock
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if items %}
+        <div class="alert alert-warning">
+            <strong>Action Required:</strong> {{ items|length }} items need restocking!
+        </div>
+        {% else %}
+        <div class="alert alert-success">
+            <strong>All Good!</strong> No items below reorder level.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

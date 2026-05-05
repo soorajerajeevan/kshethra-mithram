@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Bill {{ bill.bill_number }}{% endblock %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2>Bill {{ bill.bill_number }}</h2>
+        <div class="btn-group">
+            <a href="{{ url_for('billing.edit_bill', id=bill.id) }}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Edit Bill
+            </a>
+            <div class="btn-group" role="group">
+                <button id="printDropdown" type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="printDropdown">
+                    <li><a class="dropdown-item" href="{{ url_for('billing.print_receipt', id=bill.id, printer_type='thermal') }}" target="_blank">
+                        <i class="bi bi-printer"></i> Thermal Printer (80mm)
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('billing.print_receipt', id=bill.id, printer_type='dotmatrix6') }}" target="_blank">
+                        <i class="bi bi-printer"></i> Dot Matrix (6-inch)
+                    </a></li>
+                </ul>
+            </div>
+            <a href="{{ url_for('billing.receipt_pdf', id=bill.id) }}" class="btn btn-success">
+                <i class="bi bi-file-pdf"></i> PDF
+            </a>
+            <a href="{{ url_for('billing.whatsapp_receipt', id=bill.id) }}" class="btn btn-success">
+                <i class="bi bi-whatsapp"></i> WhatsApp
+            </a>
+        </div>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Devotee Details</h5>
+                <p><strong>Name:</strong> {{ bill.devotee.full_name }}</p>
+                <p><strong>ID:</strong> {{ bill.devotee.devotee_id }}</p>
+                <p><strong>Phone:</strong> {{ bill.devotee.phone }}</p>
+            </div>
+            <div class="col-md-6">
+                <h5>Bill Details</h5>
+                <p><strong>Date:</strong> {{ bill.bill_date|format_datetime }}</p>
+                <p><strong>Payment Mode:</strong> {{ bill.payment_mode }}</p>
+                {% if bill.payment_reference %}
+                <p><strong>Reference:</strong> {{ bill.payment_reference }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <hr>
+        <h5>Items</h5>
+        <table class="table">
+            <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+            <tbody>
+                {% for item in bill.items %}
+                <tr>
+                    <td>{{ item.item_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.unit_price|currency }}</td>
+                    <td>{{ item.total_price|currency }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="row">
+            <div class="col-md-6"></div>
+            <div class="col-md-6">
+                <table class="table">
+                    <tr><td>Subtotal:</td><td class="text-end">{{ bill.subtotal|currency }}</td></tr>
+                    {% if bill.discount_amount > 0 %}
+                    <tr><td>Discount:</td><td class="text-end text-danger">-{{ bill.discount_amount|currency }}</td></tr>
+                    {% endif %}
+                    {% if bill.donation_amount > 0 %}
+                    <tr><td>Donation:</td><td class="text-end">{{ bill.donation_amount|currency }}</td></tr>
+                    {% endif %}
+                    <tr class="table-active"><th>Grand Total:</th><th class="text-end">{{ bill.grand_total|currency }}</th></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

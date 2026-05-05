@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Bills{% endblock %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-6"><h2><i class="bi bi-receipt"></i> All Bills</h2></div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('billing.new_bill') }}" class="btn btn-primary">
+            <i class="bi bi-plus"></i> New Bill
+        </a>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body">
+        <form method="GET" class="mb-3">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="Search by bill number or devotee" value="{{ search }}">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Search</button>
+            </div>
+        </form>
+        <table class="table">
+            <thead><tr><th>Bill No</th><th>Date</th><th>Devotee</th><th>Amount</th><th>Payment</th><th>Action</th></tr></thead>
+            <tbody>
+                {% for bill in bills.items %}
+                <tr>
+                    <td>{{ bill.bill_number }}</td>
+                    <td>{{ bill.bill_date|format_datetime }}</td>
+                    <td>{{ bill.devotee.full_name }}</td>
+                    <td>{{ bill.grand_total|currency }}</td>
+                    <td><span class="badge bg-info">{{ bill.payment_mode }}</span></td>
+                    <td>
+                        <a href="{{ url_for('billing.view_bill', id=bill.id) }}" class="btn btn-sm btn-primary">View</a>
+                        <a href="{{ url_for('billing.edit_bill', id=bill.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

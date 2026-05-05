@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Temple Settings{% endblock %}
+{% block content %}
+<h2><i class="bi bi-building"></i> Temple Settings</h2>
+<div class="card">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label>Temple Name</label>
+                    <input type="text" name="temple_name" class="form-control" value="{{ settings.get('temple_name', '') }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Phone</label>
+                    <input type="text" name="temple_phone" class="form-control" value="{{ settings.get('temple_phone', '') }}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Address</label>
+                <textarea name="temple_address" class="form-control" rows="2">{{ settings.get('temple_address', '') }}</textarea>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label>Email</label>
+                    <input type="email" name="temple_email" class="form-control" value="{{ settings.get('temple_email', '') }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>GST Number</label>
+                    <input type="text" name="gst_number" class="form-control" value="{{ settings.get('gst_number', '') }}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Receipt Footer Message</label>
+                <textarea name="receipt_footer" class="form-control" rows="2">{{ settings.get('receipt_footer', '') }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label>Temple Logo</label>
+                <input type="file" name="temple_logo" class="form-control" accept="image/*">
+            </div>
+            <div class="mb-3">
+                <label>Printer Type for Receipts</label>
+                <select name="printer_type" class="form-select">
+                    <option value="thermal" {% if settings.get('printer_type', 'thermal') == 'thermal' %}selected{% endif %}>Thermal Printer (80mm)</option>
+                    <option value="dotmatrix6" {% if settings.get('printer_type', 'thermal') == 'dotmatrix6' %}selected{% endif %}>Dot Matrix Printer (6-inch role paper)</option>
+                </select>
+                <small class="text-muted">Select the printer type you use for printing receipts</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

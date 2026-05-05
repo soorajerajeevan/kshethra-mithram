@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Inventory{% endblock %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-6"><h2><i class="bi bi-box-seam"></i> Inventory</h2></div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('inventory.add') }}" class="btn btn-primary"><i class="bi bi-plus"></i> Add Item</a>
+        <a href="{{ url_for('inventory.low_stock_report') }}" class="btn btn-warning"><i class="bi bi-exclamation-triangle"></i> Low Stock</a>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body">
+        <table class="table">
+            <thead><tr><th>Item</th><th>Category</th><th>Stock</th><th>Reorder Level</th><th>Selling Price</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for item in items.items %}
+                <tr class="{% if item.is_low_stock %}table-warning{% endif %}">
+                    <td>
+                        {{ item.name }}
+                        {% if item.is_low_stock %}<i class="bi bi-exclamation-triangle text-danger"></i>{% endif %}
+                    </td>
+                    <td><span class="badge bg-info">{{ item.category }}</span></td>
+                    <td>{{ item.current_stock }} {{ item.unit }}</td>
+                    <td>{{ item.reorder_level }} {{ item.unit }}</td>
+                    <td>{{ item.selling_price|currency }}/{{ item.unit }}</td>
+                    <td>
+                        <a href="{{ url_for('inventory.view', id=item.id) }}" class="btn btn-sm btn-primary">View</a>
+                        <a href="{{ url_for('inventory.stock_in', id=item.id) }}" class="btn btn-sm btn-success">Stock In</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Devotee-wise Report{% endblock %}
+{% block content %}
+<h2><i class="bi bi-people"></i> Devotee-wise Report</h2>
+<div class="card">
+    <div class="card-body">
+        <table class="table">
+            <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Visits</th><th>Total Spent</th></tr></thead>
+            <tbody>
+                {% for stat in devotee_stats %}
+                <tr>
+                    <td>{{ stat.devotee_id }}</td>
+                    <td>{{ stat.full_name }}</td>
+                    <td>{{ stat.phone }}</td>
+                    <td>{{ stat.visit_count }}</td>
+                    <td><strong>{{ stat.total_spent|currency }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

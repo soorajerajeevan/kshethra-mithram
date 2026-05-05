@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Login') }} - {{ _('Temple Management System') }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center" style="margin-top: 5rem;">
+    <div class="col-md-5">
+        <div class="card shadow-lg">
+            <div class="card-header text-center py-4">
+                <h3 class="mb-0">
+                    <i class="bi bi-star-fill om-symbol"></i> {{ _('Temple Management System') }}
+                </h3>
+            </div>
+            <div class="card-body p-5">
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    <div class="mb-4">
+                        <label for="username" class="form-label">{{ _('Username') }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="username" name="username" required autofocus>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label">{{ _('Password') }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">{{ _('Remember me') }}</label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        <i class="bi bi-box-arrow-in-right"></i> {{ _('Login') }}
+                    </button>
+                </form>
+            </div>
+            <div class="card-footer text-center text-muted">
+                <small>🕉️ {{ _('May the divine guide your work') }}</small>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4 text-muted">
+            <small>{{ _('Default credentials: admin / admin123') }}</small>
+        </div>
+
+        <!-- Language Selector -->
+        <div class="text-center mt-3">
+            {% if session.get('language') == 'ml' %}
+                <a href="{{ url_for('auth.set_language', lang='en') }}" class="btn btn-sm btn-outline-secondary">English</a>
+                <span class="text-muted">| മലയാളം</span>
+            {% else %}
+                <span class="text-muted">English |</span>
+                <a href="{{ url_for('auth.set_language', lang='ml') }}" class="btn btn-sm btn-outline-secondary">മലയാളം</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

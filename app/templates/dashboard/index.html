@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Temple Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
+            <p class="text-muted">Welcome, {{ current_user.full_name }}! Today is {{ today.strftime('%d %B %Y') }}</p>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Today's Collection</h6>
+                        <h3 class="mb-0">{{ total_collection|currency }}</h3>
+                        <small class="text-muted">{{ bills_count }} bills</small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-cash-coin"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Cash</h6>
+                        <h4 class="mb-0">{{ cash_total|currency }}</h4>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-wallet2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">UPI/Card</h6>
+                        <h4 class="mb-0">{{ (upi_total + card_total)|currency }}</h4>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Today's Bookings</h6>
+                        <h4 class="mb-0">{{ today_bookings_count }}</h4>
+                        <small class="text-success">{{ completed_bookings|length }} completed</small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-lightning"></i> Quick Actions
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('billing.new_bill') }}" class="btn btn-primary w-100 py-3">
+                                <i class="bi bi-receipt"></i><br>New Bill
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('poojas.bookings_add') }}" class="btn btn-primary w-100 py-3">
+                                <i class="bi bi-calendar-plus"></i><br>Book Pooja
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('devotees.add') }}" class="btn btn-primary w-100 py-3">
+                                <i class="bi bi-person-plus"></i><br>Add Devotee
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('reports.index') }}" class="btn btn-primary w-100 py-3">
+                                <i class="bi bi-graph-up"></i><br>View Reports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Today's Pending Bookings -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-calendar-event"></i> Today's Pending Bookings
+                </div>
+                <div class="card-body">
+                    {% if pending_bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Devotee</th>
+                                        <th>Pooja</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in pending_bookings %}
+                                    <tr>
+                                        <td>{{ booking.devotee.full_name }}</td>
+                                        <td>{{ booking.service.malayalam_name or booking.service.name }}</td>
+                                        <td>
+                                            <a href="{{ url_for('poojas.bookings_view', id=booking.id) }}" class="btn btn-sm btn-primary">
+                                                View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No pending bookings for today</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Poojas Today -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-star"></i> Top 5 Poojas by Revenue
+                </div>
+                <div class="card-body">
+                    {% if top_poojas %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Pooja</th>
+                                        <th>Count</th>
+                                        <th>Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pooja in top_poojas %}
+                                    <tr>
+                                        <td>{{ pooja.item_name }}</td>
+                                        <td>{{ pooja.count }}</td>
+                                        <td>{{ pooja.revenue|currency }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No pooja data for today</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Low Stock Alerts -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <i class="bi bi-exclamation-triangle"></i> Low Stock Alerts
+                </div>
+                <div class="card-body">
+                    {% if low_stock_items %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Current Stock</th>
+                                        <th>Reorder Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in low_stock_items %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('inventory.view', id=item.id) }}">
+                                                {{ item.name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-danger">
+                                                {{ item.current_stock }} {{ item.unit }}
+                                            </span>
+                                        </td>
+                                        <td>{{ item.reorder_level }} {{ item.unit }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <a href="{{ url_for('inventory.list', low_stock='yes') }}" class="btn btn-sm btn-warning">
+                            View All Low Stock Items
+                        </a>
+                    {% else %}
+                        <p class="text-success text-center">✓ All items are well-stocked!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upcoming Bookings -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-calendar-range"></i> Upcoming Bookings (Next 7 Days)
+                </div>
+                <div class="card-body">
+                    {% if upcoming_bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Devotee</th>
+                                        <th>Pooja</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in upcoming_bookings %}
+                                    <tr>
+                                        <td>{{ booking.scheduled_date|format_date }}</td>
+                                        <td>{{ booking.devotee.full_name }}</td>
+                                        <td>{{ booking.service.malayalam_name or booking.service.name }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <a href="{{ url_for('poojas.calendar') }}" class="btn btn-sm btn-primary">
+                            View Full Calendar
+                        </a>
+                    {% else %}
+                        <p class="text-muted text-center">No upcoming bookings</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

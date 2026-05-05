@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Pooja-wise Report{% endblock %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2><i class="bi bi-calendar-event"></i> Pooja-wise Revenue Report</h2>
+    </div>
+</div>
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-5">
+                <label>Start Date</label>
+                <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+            </div>
+            <div class="col-md-5">
+                <label>End Date</label>
+                <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+            </div>
+            <div class="col-md-2">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">View</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header">
+        Pooja Statistics
+        <a href="{{ url_for('reports.export_csv', report_type='pooja_wise', start_date=start_date, end_date=end_date) }}" class="btn btn-sm btn-success float-end">
+            <i class="bi bi-download"></i> Export CSV
+        </a>
+    </div>
+    <div class="card-body">
+        <table class="table">
+            <thead><tr><th>Pooja Name</th><th>Count</th><th>Revenue</th><th>Avg per Pooja</th></tr></thead>
+            <tbody>
+                {% for stat in pooja_stats %}
+                <tr>
+                    <td>{{ stat.item_name }}</td>
+                    <td>{{ stat.count }}</td>
+                    <td><strong>{{ stat.revenue|currency }}</strong></td>
+                    <td>{{ (stat.revenue / stat.count)|currency }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="table-active">
+                    <th>Total</th>
+                    <th>{{ total_count }}</th>
+                    <th>{{ total_revenue|currency }}</th>
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

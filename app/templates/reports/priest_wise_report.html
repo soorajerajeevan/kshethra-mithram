@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Priest-wise Report{% endblock %}
+{% block content %}
+<h2><i class="bi bi-person-badge"></i> Priest-wise Report</h2>
+<div class="card">
+    <div class="card-body">
+        <table class="table">
+            <thead><tr><th>Priest</th><th>Bookings</th><th>Total Revenue</th><th>Avg per Booking</th></tr></thead>
+            <tbody>
+                {% for stat in priest_stats %}
+                <tr>
+                    <td>{{ stat.name }}</td>
+                    <td>{{ stat.booking_count }}</td>
+                    <td>{{ stat.total_revenue|currency }}</td>
+                    <td>{{ (stat.total_revenue / stat.booking_count)|currency if stat.booking_count > 0 else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

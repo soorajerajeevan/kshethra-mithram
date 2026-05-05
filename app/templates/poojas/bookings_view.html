@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Booking {{ booking.booking_number }}{% endblock %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2>Booking {{ booking.booking_number }}</h2>
+        <span class="badge 
+            {% if booking.status == 'COMPLETED' %}bg-success
+            {% elif booking.status == 'CONFIRMED' %}bg-info
+            {% elif booking.status == 'CANCELLED' %}bg-danger
+            {% else %}bg-warning{% endif %}">
+            {{ booking.status }}
+        </span>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Devotee Details</h5>
+                <p><strong>Name:</strong> {{ booking.devotee.full_name }}</p>
+                <p><strong>Phone:</strong> {{ booking.devotee.phone }}</p>
+                <h5>Pooja Details</h5>
+                <p><strong>Service:</strong> {{ booking.service.malayalam_name or booking.service.name }}</p>
+                <p><strong>Date:</strong> {{ booking.scheduled_date|format_date }}</p>
+            </div>
+            <div class="col-md-6">
+                <h5>Payment Details</h5>
+                <p><strong>Total Amount:</strong> {{ booking.total_amount|currency }}</p>
+                <p><strong>Advance Paid:</strong> {{ booking.advance_paid|currency }}</p>
+                <p><strong>Balance:</strong> {{ booking.balance_amount|currency }}</p>
+                {% if booking.special_instructions %}
+                <p><strong>Instructions:</strong> {{ booking.special_instructions }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <hr>
+        {% if booking.status in ['BOOKED', 'CONFIRMED'] %}
+        <form method="POST" action="{{ url_for('poojas.bookings_complete', id=booking.id) }}" class="d-inline">
+            <input type="hidden" name="generate_bill" value="yes">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle"></i> Mark Complete & Generate Bill
+            </button>
+        </form>
+        <form method="POST" action="{{ url_for('poojas.bookings_cancel', id=booking.id) }}" class="d-inline">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Cancel this booking?')">
+                <i class="bi bi-x-circle"></i> Cancel Booking
+            </button>
+        </form>
+        {% endif %}
+        {% if booking.bill %}
+        <a href="{{ url_for('billing.view_bill', id=booking.bill.id) }}" class="btn btn-info">
+            <i class="bi bi-receipt"></i> View Bill
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

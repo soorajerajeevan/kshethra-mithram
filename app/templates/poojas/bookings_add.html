@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}New Booking{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">New Pooja Booking</div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Devotee *</label>
+                            <select name="devotee_id" class="form-select" required>
+                                <option value="">-- Select Devotee --</option>
+                                {% for devotee in devotees %}
+                                <option value="{{ devotee.id }}">{{ devotee.devotee_id }} - {{ devotee.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Pooja Service *</label>
+                            <select name="service_id" class="form-select" required>
+                                <option value="">-- Select Service --</option>
+                                {% for service in services %}
+                                <option value="{{ service.id }}">{{ service.malayalam_name or service.name }} - {{ service.default_price|currency }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Scheduled Date *</label>
+                            <input type="date" name="scheduled_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Custom Price (₹) - Optional</label>
+                            <input type="number" name="custom_price" class="form-control" step="1" placeholder="Leave blank for default">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Advance Paid (₹)</label>
+                            <input type="number" name="advance_paid" class="form-control" step="1" value="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Special Instructions</label>
+                        <textarea name="special_instructions" class="form-control" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Booking</button>
+                    <a href="{{ url_for('poojas.bookings_list') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

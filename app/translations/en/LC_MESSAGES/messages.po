@@ -1,0 +1,73 @@
+# English translations for Temple Management System
+# Copyright (C) 2024
+# This file is distributed under the same license as the Temple Management System project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Temple Management System 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-04 18:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Temple Management System"
+msgstr "Temple Management System"
+
+msgid "Login"
+msgstr "Login"
+
+msgid "Username"
+msgstr "Username"
+
+msgid "Password"
+msgstr "Password"
+
+msgid "Remember me"
+msgstr "Remember me"
+
+msgid "Invalid username or password"
+msgstr "Invalid username or password"
+
+msgid "Welcome back, %(name)s!"
+msgstr "Welcome back, %(name)s!"
+
+msgid "Please log in to access this page."
+msgstr "Please log in to access this page."
+
+msgid "You have been logged out successfully."
+msgstr "You have been logged out successfully."
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Devotees"
+msgstr "Devotees"
+
+msgid "Billing"
+msgstr "Billing"
+
+msgid "Poojas"
+msgstr "Poojas"
+
+msgid "Inventory"
+msgstr "Inventory"
+
+msgid "Reports"
+msgstr "Reports"
+
+msgid "Settings"
+msgstr "Settings"
+
+msgid "Logout"
+msgstr "Logout"
+
+msgid "May the divine guide your work"
+msgstr "May the divine guide your work"
+
+msgid "Default credentials: admin / admin123"
+msgstr "Default credentials: admin / admin123"

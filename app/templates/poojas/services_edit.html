@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Edit Pooja Service{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">Edit Pooja Service - {{ service.malayalam_name or service.name }}</div>
+            <div class="card-body">
+                {% if in_use %}
+                <div class="alert alert-warning">
+                    This service is already in use.
+                    Bookings: {{ usage_counts.bookings }},
+                    Bills: {{ usage_counts.bill_items }}.
+                    Only disabling is recommended.
+                </div>
+                {% endif %}
+                <form method="POST">
+                    <div class="mb-3">
+                        <label>Pooja Name (Malayalam) *</label>
+                        <input type="text" name="malayalam_name" class="form-control" value="{{ service.malayalam_name or service.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Pooja Name (English) *</label>
+                        <input type="text" name="english_name" class="form-control" value="{{ service.english_name or '' }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Category *</label>
+                            <select name="category" class="form-select" required>
+                                <option value="Daily Archana" {% if service.category == 'Daily Archana' %}selected{% endif %}>Daily Archana</option>
+                                <option value="Special Pooja" {% if service.category == 'Special Pooja' %}selected{% endif %}>Special Pooja</option>
+                                <option value="Homam" {% if service.category == 'Homam' %}selected{% endif %}>Homam</option>
+                                <option value="Festival" {% if service.category == 'Festival' %}selected{% endif %}>Festival</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Default Price (₹) *</label>
+                            <input type="number" name="default_price" class="form-control" step="1" value="{{ (service.default_price / 100)|round(2) }}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Duration (minutes) *</label>
+                            <input type="number" name="duration_minutes" class="form-control" value="{{ service.duration_minutes }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Max Bookings per Day *</label>
+                            <input type="number" name="max_bookings_per_day" class="form-control" value="{{ service.max_bookings_per_day }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="3">{{ service.description or '' }}</textarea>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" name="requires_priest" class="form-check-input" id="requiresPriest" {% if service.requires_priest %}checked{% endif %}>
+                        <label class="form-check-label" for="requiresPriest">Requires Priest</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" name="is_active" class="form-check-input" id="isActive" {% if service.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="isActive">Enabled</label>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex gap-2">
+                            <form method="POST" action="{{ url_for('poojas.services_delete', id=service.id) }}" class="d-inline">
+                                <input type="hidden" name="mode" value="disable">
+                                <button type="submit" class="btn btn-warning" onclick="return confirm('Disable this service?')">Disable</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('poojas.services_delete', id=service.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this service? If used, it will be disabled instead.')">Delete</button>
+                            </form>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Update Service</button>
+                            <a href="{{ url_for('poojas.services_list') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

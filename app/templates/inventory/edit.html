@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ item.name }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">Edit {{ item.name }}</div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Item Name *</label>
+                            <input type="text" name="name" class="form-control" value="{{ item.name }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Category *</label>
+                            <input type="text" name="category" class="form-control" value="{{ item.category }}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label>Unit *</label>
+                            <select name="unit" class="form-select" required>
+                                <option value="kg" {% if item.unit == 'kg' %}selected{% endif %}>Kilogram (kg)</option>
+                                <option value="nos" {% if item.unit == 'nos' %}selected{% endif %}>Numbers (nos)</option>
+                                <option value="pack" {% if item.unit == 'pack' %}selected{% endif %}>Pack</option>
+                                <option value="litre" {% if item.unit == 'litre' %}selected{% endif %}>Litre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Reorder Level</label>
+                            <input type="number" name="reorder_level" class="form-control" step="1" value="{{ item.reorder_level }}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label>Supplier</label>
+                            <input type="text" name="supplier" class="form-control" value="{{ item.supplier or '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Cost Price (₹)</label>
+                            <input type="number" name="cost_price" class="form-control" step="1" value="{{ (item.cost_price / 100)|round(2) }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Selling Price (₹)</label>
+                            <input type="number" name="selling_price" class="form-control" step="1" value="{{ (item.selling_price / 100)|round(2) }}">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                    <a href="{{ url_for('inventory.view', id=item.id) }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

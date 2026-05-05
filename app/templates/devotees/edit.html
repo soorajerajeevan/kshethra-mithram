@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Edit Devotee{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">Edit Devotee - {{ devotee.devotee_id }}</div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Full Name *</label>
+                            <input type="text" name="full_name" class="form-control" value="{{ devotee.full_name }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Nakshatra</label>
+                            <input type="text" name="nakshatra" class="form-control" value="{{ devotee.nakshatra or '' }}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Phone *</label>
+                            <input type="text" name="phone" class="form-control" value="{{ devotee.phone }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Email</label>
+                            <input type="email" name="email" class="form-control" value="{{ devotee.email or '' }}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Address</label>
+                        <textarea name="address" class="form-control" rows="2">{{ devotee.address or '' }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>House Name</label>
+                            <input type="text" name="gotra" class="form-control" value="{{ devotee.gotra or '' }}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Family Members</label>
+                        <textarea name="family_members" class="form-control" rows="4" placeholder="One per line. Use: Name | Nakshathram">{{ family_members_text or '' }}</textarea>
+                        <small class="text-muted">Example: Sulochana | 12 ഉത്രം</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                    <a href="{{ url_for('devotees.view', id=devotee.id) }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Priests{% endblock %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-6"><h2><i class="bi bi-person-badge"></i> Priests</h2></div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('settings.priests_add') }}" class="btn btn-primary"><i class="bi bi-plus"></i> Add Priest</a>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body">
+        <table class="table">
+            <thead><tr><th>Name</th><th>Phone</th><th>Specialization</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for priest in priests %}
+                <tr>
+                    <td>{{ priest.name }}</td>
+                    <td>{{ priest.phone }}</td>
+                    <td>{{ priest.specialization }}</td>
+                    <td>
+                        <span class="badge {% if priest.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if priest.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('settings.priests_edit', id=priest.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                        <form method="POST" action="{{ url_for('settings.priests_toggle_active', id=priest.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm {% if priest.is_active %}btn-danger{% else %}btn-success{% endif %}">
+                                {% if priest.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('settings.priests_delete', id=priest.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this priest?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

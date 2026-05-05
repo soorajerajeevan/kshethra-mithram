@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Add User{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Add User</div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label>Username *</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Email *</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Full Name *</label>
+                        <input type="text" name="full_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Role *</label>
+                        <select name="role" class="form-select" required>
+                            <option value="admin">Admin</option>
+                            <option value="cashier">Cashier</option>
+                            <option value="priest">Priest</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Password *</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create User</button>
+                    <a href="{{ url_for('settings.users_list') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

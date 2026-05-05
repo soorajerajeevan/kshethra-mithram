@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Add Priest{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Add Priest</div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label>Name *</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Phone</label>
+                        <input type="text" name="phone" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>Specialization</label>
+                        <input type="text" name="specialization" class="form-control" placeholder="e.g., Homam specialist">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Priest</button>
+                    <a href="{{ url_for('settings.priests_list') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
