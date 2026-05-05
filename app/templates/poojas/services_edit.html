@@ -53,8 +53,8 @@
                         <textarea name="description" class="form-control" rows="3">{{ service.description or '' }}</textarea>
                     </div>
                     <div class="form-check mb-3">
-                        <input type="checkbox" name="requires_priest" class="form-check-input" id="requiresPriest" {% if service.requires_priest %}checked{% endif %}>
-                        <label class="form-check-label" for="requiresPriest">Requires Priest</label>
+                        <input type="checkbox" name="add_to_booking" class="form-check-input" id="add_to_booking" {% if service.add_to_booking %}checked{% endif %}>
+                        <label class="form-check-label" for="add_to_booking">Show in Booking</label>
                     </div>
                     <div class="form-check mb-3">
                         <input type="checkbox" name="is_active" class="form-check-input" id="isActive" {% if service.is_active %}checked{% endif %}>

@@ -55,4 +55,60 @@
         </div>
     </div>
 </div>
+<script>
+    const devotees = {{ devotees|default ([], true) | tojson }};
+    function devoteeLabel(d) { return `${d.devotee_id} - ${d.full_name} (${d.phone || 'No phone'})`; }
+    const tomSelectInstances = {};
+    function initSearchableSelect(selector, options = {}) {
+        const el = document.querySelector(selector);
+        if (!el || typeof TomSelect === 'undefined') return null;
+        if (el.tomselect) return el.tomselect;
+        return new TomSelect(el, {
+            create: false,
+            maxOptions: 100,
+            closeAfterSelect: true,
+            dropdownParent: 'body',
+            ...options
+        });
+    }
+
+    function initializeSearchables() {
+        initSearchableSelect('#devotee_id', {
+            placeholder: 'Type devotee name / ID / phone',
+            create: function (input) {
+                const clean = (input || '').trim();
+                if (!clean) return false;
+                return {
+                    value: `NEW::${clean}`,
+                    text: `${clean} (New devotee)`
+                };
+            },
+            onChange: function (value) {
+                toggleNewDevoteePhone(value);
+                refreshAllPoojaFamilyOptions();
+                syncPrimaryDevoteeToFirstPooja();
+                updateEditDevoteeButton();
+            }
+        });
+    }
+    
+    function toggleNewDevoteePhone(value) {
+        const wrap = document.getElementById('newDevoteePhoneWrap');
+        const phone = document.getElementById('new_devotee_phone');
+        // The new-devotee inline inputs may not be rendered on this page.
+        // Bail out gracefully so the rest of the onChange chain (refreshing
+        // the pooja family-member dropdowns) still runs.
+        if (!wrap || !phone) return;
+        const isNew = String(value || '').startsWith('NEW::');
+        if (isNew) {
+            wrap.classList.remove('d-none');
+            phone.required = true;
+        } else {
+            wrap.classList.add('d-none');
+            phone.required = false;
+            phone.value = '';
+        }
+    }
+
+</script>
 {% endblock %}

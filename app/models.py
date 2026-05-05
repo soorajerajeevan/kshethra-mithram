@@ -66,7 +66,7 @@ class PoojaService(db.Model):
     default_price = db.Column(db.Integer, nullable=False)  # in paise
     duration_minutes = db.Column(db.Integer, default=30)
     max_bookings_per_day = db.Column(db.Integer, default=10)
-    requires_priest = db.Column(db.Boolean, default=True)
+    add_to_booking = db.Column(db.Boolean, default=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -149,7 +149,7 @@ class Bill(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     bill_number = db.Column(db.String(50), unique=True, nullable=False, index=True)  # BILL-2024-00456
     devotee_id = db.Column(db.Integer, db.ForeignKey('devotees.id'), nullable=False)
-    bill_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    bill_date = db.Column(db.DateTime, default=datetime.now, nullable=False, index=True)
     subtotal = db.Column(db.Integer, nullable=False)  # in paise
     discount_amount = db.Column(db.Integer, default=0)  # in paise
     discount_percent = db.Column(db.Float, default=0.0)
@@ -191,13 +191,13 @@ class BillItem(db.Model):
 class PoojaBooking(db.Model):
     """Future pooja bookings/scheduling"""
     __tablename__ = 'pooja_bookings'
-    
     id = db.Column(db.Integer, primary_key=True)
     booking_number = db.Column(db.String(50), unique=True, nullable=False, index=True)  # BOOK-2024-00123
     devotee_id = db.Column(db.Integer, db.ForeignKey('devotees.id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('pooja_services.id'), nullable=False)
     booking_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     scheduled_date = db.Column(db.Date, nullable=False, index=True)
+    quantity = db.Column(db.Integer, default=1)
     special_instructions = db.Column(db.Text)
     advance_paid = db.Column(db.Integer, default=0)  # in paise
     total_amount = db.Column(db.Integer, nullable=False)  # in paise
@@ -206,10 +206,11 @@ class PoojaBooking(db.Model):
     completed_at = db.Column(db.DateTime)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    bill_id = db.Column(db.Integer, db.ForeignKey('bills.id'))
     
     # Relationships
     creator = db.relationship('User', foreign_keys=[created_by])
-    bill = db.relationship('Bill', backref='booking', uselist=False)
+    bill = db.relationship('Bill', foreign_keys=[bill_id])
     
     def __repr__(self):
         return f'<PoojaBooking {self.booking_number}>'

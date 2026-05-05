@@ -28,7 +28,7 @@
             </div>
         </div>
         
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="stat-card">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -42,12 +42,26 @@
             </div>
         </div>
         
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="stat-card">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-muted mb-2">UPI/Card</h6>
-                        <h4 class="mb-0">{{ (upi_total + card_total)|currency }}</h4>
+                        <h6 class="text-muted mb-2">UPI</h6>
+                        <h4 class="mb-0">{{ (upi_total)|currency }}</h4>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Credit</h6>
+                        <h4 class="mb-0">{{ (credit_total)|currency }}</h4>
                     </div>
                     <div class="stat-icon">
                         <i class="bi bi-credit-card"></i>
@@ -88,7 +102,7 @@
                         </div>
                         <div class="col-md-3">
                             <a href="{{ url_for('poojas.bookings_add') }}" class="btn btn-primary w-100 py-3">
-                                <i class="bi bi-calendar-plus"></i><br>Book Pooja
+                                <i class="bi bi-calendar-plus"></i><br>Advance Booking
                             </a>
                         </div>
                         <div class="col-md-3">
@@ -122,6 +136,7 @@
                                     <tr>
                                         <th>Devotee</th>
                                         <th>Pooja</th>
+                                        <th>Quantity</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -130,10 +145,17 @@
                                     <tr>
                                         <td>{{ booking.devotee.full_name }}</td>
                                         <td>{{ booking.service.malayalam_name or booking.service.name }}</td>
+                                        <td>{{ booking.quantity }}</td>
                                         <td>
                                             <a href="{{ url_for('poojas.bookings_view', id=booking.id) }}" class="btn btn-sm btn-primary">
-                                                View
+                                                <i class="bi bi-eye"></i> View
                                             </a>
+                                            <form method="POST" action="{{ url_for('poojas.bookings_complete_only', id=booking.id) }}" class="d-inline">
+                                                <input type="hidden" name="generate_bill" value="yes">
+                                                <button type="submit" class="btn  btn-sm btn-success">
+                                                    <i class="bi bi-check-circle"></i> Mark Complete
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -147,36 +169,41 @@
             </div>
         </div>
         
-        <!-- Top Poojas Today -->
+        <!-- Upcoming Bookings -->
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <i class="bi bi-star"></i> Top 5 Poojas by Revenue
+                    <i class="bi bi-calendar-range"></i> Upcoming Bookings (Next 7 Days)
                 </div>
                 <div class="card-body">
-                    {% if top_poojas %}
+                    {% if upcoming_bookings %}
                         <div class="table-responsive">
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
+                                        <th>Date</th>
+                                        <th>Devotee</th>
                                         <th>Pooja</th>
-                                        <th>Count</th>
-                                        <th>Revenue</th>
+                                        <th>Quantity</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for pooja in top_poojas %}
+                                    {% for booking in upcoming_bookings %}
                                     <tr>
-                                        <td>{{ pooja.item_name }}</td>
-                                        <td>{{ pooja.count }}</td>
-                                        <td>{{ pooja.revenue|currency }}</td>
+                                        <td>{{ booking.scheduled_date|format_date }}</td>
+                                        <td>{{ booking.devotee.full_name }}</td>
+                                        <td>{{ booking.service.malayalam_name or booking.service.name }}</td>
+                                        <td>{{ booking.quantity }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
+                        <a href="{{ url_for('poojas.calendar') }}" class="btn btn-sm btn-primary">
+                            View Full Calendar
+                        </a>
                     {% else %}
-                        <p class="text-muted text-center">No pooja data for today</p>
+                        <p class="text-muted text-center">No upcoming bookings</p>
                     {% endif %}
                 </div>
             </div>
@@ -228,39 +255,36 @@
             </div>
         </div>
         
-        <!-- Upcoming Bookings -->
+        <!-- Top Poojas Today -->
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <i class="bi bi-calendar-range"></i> Upcoming Bookings (Next 7 Days)
+                    <i class="bi bi-star"></i> Top 5 Poojas by Revenue
                 </div>
                 <div class="card-body">
-                    {% if upcoming_bookings %}
+                    {% if top_poojas %}
                         <div class="table-responsive">
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
-                                        <th>Date</th>
-                                        <th>Devotee</th>
                                         <th>Pooja</th>
+                                        <th>Count</th>
+                                        <th>Revenue</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for booking in upcoming_bookings %}
+                                    {% for pooja in top_poojas %}
                                     <tr>
-                                        <td>{{ booking.scheduled_date|format_date }}</td>
-                                        <td>{{ booking.devotee.full_name }}</td>
-                                        <td>{{ booking.service.malayalam_name or booking.service.name }}</td>
+                                        <td>{{ pooja.item_name }}</td>
+                                        <td>{{ pooja.count }}</td>
+                                        <td>{{ pooja.revenue|currency }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                        <a href="{{ url_for('poojas.calendar') }}" class="btn btn-sm btn-primary">
-                            View Full Calendar
-                        </a>
                     {% else %}
-                        <p class="text-muted text-center">No upcoming bookings</p>
+                        <p class="text-muted text-center">No pooja data for today</p>
                     {% endif %}
                 </div>
             </div>

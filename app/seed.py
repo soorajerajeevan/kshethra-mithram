@@ -163,7 +163,7 @@ def seed_all():
                 default_price=int(rate_rupees * 100),
                 duration_minutes=30,
                 max_bookings_per_day=50,
-                requires_priest=True
+                add_to_booking=False
             )
             db.session.add(pooja)
     

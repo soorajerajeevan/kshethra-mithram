@@ -12,15 +12,15 @@ import io
 bp = Blueprint('billing', __name__, url_prefix='/billing')
 
 MALAYALAM_NAKSHATHRAS = [
-    "1 അശ്വതി",
-    "2 ഭരണി",
-    "3 കാർത്തിക",
-    "4 രോഹിണി",
-    "5 മകയിരം",
-    "6 തിരുവാതിര",
-    "7 പുണർതം",
-    "8 പൂയം",
-    "9 ആയില്യം",
+    "01 അശ്വതി",
+    "02 ഭരണി",
+    "03 കാർത്തിക",
+    "04 രോഹിണി",
+    "05 മകയിരം",
+    "06 തിരുവാതിര",
+    "07 പുണർതം",
+    "08 പൂയം",
+    "09 ആയില്യം",
     "10 മകം",
     "11 പൂരം",
     "12 ഉത്രം",
@@ -121,6 +121,139 @@ def dump_family_members(items):
     return json.dumps(cleaned, ensure_ascii=False)
 
 
+def _safe_float(value, default=0.0):
+    """Safely parse a float from form input."""
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_int(value, default=0):
+    """Safely parse an int from form input."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def validate_new_bill_form(form):
+    """Validate the new bill form data.
+
+    Returns (errors, devotee_raw, pooja_count, retail_count) where *errors*
+    is a list of human-readable error strings.  An empty list means the form
+    passed validation.
+    """
+    errors = []
+
+    # --- 1. Devotee validation ---
+    devotee_raw = (form.get('devotee_id') or '').strip()
+    if not devotee_raw:
+        errors.append('Please select a devotee or enter a new devotee name.')
+    elif devotee_raw.startswith('NEW::'):
+        new_name = devotee_raw.replace('NEW::', '', 1).strip()
+        if not new_name:
+            errors.append('New devotee name cannot be empty.')
+        new_phone = (form.get('new_devotee_phone') or '').strip()
+        if not new_phone:
+            errors.append('Phone number is required for a new devotee.')
+    else:
+        if not devotee_raw.isdigit():
+            errors.append('Invalid devotee selection.')
+        else:
+            devotee = Devotee.query.get(int(devotee_raw))
+            if not devotee:
+                errors.append('Selected devotee not found.')
+
+    # --- 2. Pooja items validation (at least one required) ---
+    pooja_count = _safe_int(form.get('pooja_count'), 0)
+    valid_pooja_count = 0
+
+    for i in range(pooja_count):
+        service_id = (form.get(f'pooja_service_{i}') or '').strip()
+        if not service_id:
+            continue  # empty row, skip
+
+        valid_pooja_count += 1
+        row_label = f'Pooja row {valid_pooja_count}'
+
+        if not service_id.isdigit():
+            errors.append(f'{row_label}: Invalid pooja service selected.')
+        else:
+            service = PoojaService.query.get(int(service_id))
+            if not service:
+                errors.append(f'{row_label}: Selected pooja service does not exist.')
+
+        devotee_name = (form.get(f'pooja_devotee_name_{i}') or '').strip()
+        if not devotee_name:
+            errors.append(f'{row_label}: Devotee name is required.')
+
+        nakshathram = (form.get(f'pooja_nakshathram_{i}') or '').strip()
+        if not nakshathram:
+            errors.append(f'{row_label}: Nakshathram is required.')
+
+        qty_raw = form.get(f'pooja_quantity_{i}')
+        qty = _safe_float(qty_raw)
+        if qty <= 0:
+            errors.append(f'{row_label}: Quantity must be a positive number.')
+
+        price_raw = form.get(f'pooja_price_{i}')
+        price = _safe_float(price_raw)
+        if price < 0:
+            errors.append(f'{row_label}: Amount cannot be negative.')
+
+    if valid_pooja_count == 0:
+        errors.append('At least one pooja item is required.')
+
+    # --- 3. Retail items validation (optional, but validate if present) ---
+    retail_count = _safe_int(form.get('retail_count'), 0)
+    for i in range(retail_count):
+        item_id = (form.get(f'retail_item_{i}') or '').strip()
+        if not item_id:
+            continue  # empty row, skip
+
+        row_label = f'Retail item row {i + 1}'
+
+        if not item_id.isdigit():
+            errors.append(f'{row_label}: Invalid item selected.')
+        else:
+            item = InventoryItem.query.get(int(item_id))
+            if not item:
+                errors.append(f'{row_label}: Selected item does not exist.')
+
+        qty_raw = form.get(f'retail_quantity_{i}')
+        qty = _safe_float(qty_raw)
+        if qty <= 0:
+            errors.append(f'{row_label}: Quantity must be a positive number.')
+
+        price_raw = form.get(f'retail_price_{i}')
+        price = _safe_float(price_raw)
+        if price < 0:
+            errors.append(f'{row_label}: Price cannot be negative.')
+
+    # --- 4. Discount & donation validation ---
+    discount_value_raw = form.get('discount_value')
+    discount_value = _safe_float(discount_value_raw, 0.0)
+    if discount_value < 0:
+        errors.append('Discount amount cannot be negative.')
+
+    discount_type = form.get('discount_type', 'amount')
+    if discount_type == 'percent' and discount_value > 100:
+        errors.append('Discount percentage cannot exceed 100%.')
+
+    donation_raw = form.get('donation')
+    donation = _safe_float(donation_raw, 0.0)
+    if donation < 0:
+        errors.append('Donation amount cannot be negative.')
+
+    # --- 5. Payment mode ---
+    payment_mode = (form.get('payment_mode') or '').strip()
+    if payment_mode not in ('Cash', 'UPI', 'Credit'):
+        errors.append('Please select a valid payment mode.')
+
+    return errors
+
+
 @bp.route('/new', methods=['GET', 'POST'])
 @login_required
 def new_bill():
@@ -130,6 +263,16 @@ def new_bill():
         session_token = session.get('new_bill_submission_token', '')
         if not form_token or not session_token or form_token != session_token:
             flash('Duplicate/expired submission prevented. Please submit the bill again.', 'warning')
+            return redirect(url_for('billing.new_bill'))
+
+        # ── Validate ──
+        errors = validate_new_bill_form(request.form)
+        if errors:
+            for err in errors:
+                flash(err, 'danger')
+            # Re-render the form instead of redirecting so flash messages
+            # are visible immediately (redirect would lose them on some
+            # setups without a proper session backend).
             return redirect(url_for('billing.new_bill'))
 
         # One-time submission token to prevent refresh/back duplicate POST.
@@ -142,12 +285,6 @@ def new_bill():
 
         if devotee_raw.startswith('NEW::'):
             new_name = devotee_raw.replace('NEW::', '', 1).strip()
-            if not new_name:
-                flash('Please enter a devotee name', 'warning')
-                return redirect(url_for('billing.new_bill'))
-            if not new_devotee_phone:
-                flash('Phone number is required for new devotee', 'warning')
-                return redirect(url_for('billing.new_bill'))
 
             devotee = Devotee(
                 devotee_id=generate_devotee_id(),
@@ -160,20 +297,15 @@ def new_bill():
             db.session.flush()
             devotee_id = devotee.id
         else:
-            if not devotee_raw.isdigit():
-                flash('Please select a valid devotee', 'warning')
-                return redirect(url_for('billing.new_bill'))
             devotee_id = int(devotee_raw)
             devotee = Devotee.query.get(devotee_id)
-            if not devotee:
-                flash('Selected devotee not found', 'warning')
-                return redirect(url_for('billing.new_bill'))
 
         # Parse items from form (can have multiple poojas and retail items)
         items_data = []
-        
+        pooja_bookings=[]
+
         # Get all pooja items
-        pooja_count = int(request.form.get('pooja_count', 0))
+        pooja_count = _safe_int(request.form.get('pooja_count'), 0)
         for i in range(pooja_count):
             service_id = request.form.get(f'pooja_service_{i}')
             if service_id:
@@ -182,10 +314,8 @@ def new_bill():
                     continue
                 pooja_devotee_name = (request.form.get(f'pooja_devotee_name_{i}') or '').strip()
                 pooja_nakshathram = (request.form.get(f'pooja_nakshathram_{i}') or '').strip()
-                quantity = max(float(request.form.get(f'pooja_quantity_{i}', 1) or 1), 1)
-                if not pooja_devotee_name:
-                    flash('Devotee Name is mandatory for each Pooja entry.', 'warning')
-                    return redirect(url_for('billing.new_bill'))
+                pooja_date = (request.form.get(f'pooja_date_{i}') or '').strip()
+                quantity = max(_safe_float(request.form.get(f'pooja_quantity_{i}'), 1), 1)
                 if pooja_devotee_name:
                     key = pooja_devotee_name.lower()
                     if key not in family_member_map:
@@ -196,7 +326,7 @@ def new_bill():
                     elif not family_member_map[key].get('nakshathram') and pooja_nakshathram:
                         family_member_map[key]['nakshathram'] = pooja_nakshathram
                 custom_price = request.form.get(f'pooja_price_{i}')
-                price_paise = int(float(custom_price) * 100) if custom_price else service.default_price
+                price_paise = int(_safe_float(custom_price) * 100) if custom_price else service.default_price
                 total_price = int(price_paise * quantity)
 
                 item_name_parts = [service.display_name]
@@ -205,60 +335,61 @@ def new_bill():
                 if pooja_nakshathram:
                     item_name_parts.append(f'({pooja_nakshathram})')
                 item_name = ' '.join(item_name_parts)
-                
+
                 items_data.append({
                     'type': 'POOJA',
-                    'id': service.id,
+                    'service_id': service.id,
                     'name': item_name,
                     'quantity': quantity,
                     'unit_price': price_paise,
-                    'total_price': total_price
+                    'total_price': total_price,
+                    'service': service
                 })
-        
+
+
         # Get all retail items
-        retail_count = int(request.form.get('retail_count', 0))
+        retail_count = _safe_int(request.form.get('retail_count'), 0)
         for i in range(retail_count):
             item_id = request.form.get(f'retail_item_{i}')
             if item_id:
                 item = InventoryItem.query.get(int(item_id))
-                quantity = float(request.form.get(f'retail_quantity_{i}', 1))
+                if not item:
+                    continue
+                quantity = _safe_float(request.form.get(f'retail_quantity_{i}'), 1)
                 custom_price = request.form.get(f'retail_price_{i}')
-                unit_price = int(float(custom_price) * 100) if custom_price else item.selling_price
+                unit_price = int(_safe_float(custom_price) * 100) if custom_price else item.selling_price
                 total_price = int(unit_price * quantity)
-                
+
                 items_data.append({
                     'type': 'RETAIL',
-                    'id': item.id,
+                    'service_id': item.id,
                     'name': item.name,
                     'quantity': quantity,
                     'unit_price': unit_price,
-                    'total_price': total_price
+                    'total_price': total_price,
+                    'service': item
                 })
-        
-        if not items_data:
-            flash('Please add at least one item to the bill', 'warning')
-            return redirect(url_for('billing.new_bill'))
-        
+
         # Calculate totals
         subtotal = sum(item['total_price'] for item in items_data)
-        
+
         # Parse discount
         discount_type = request.form.get('discount_type', 'amount')
-        discount_value = float(request.form.get('discount_value', 0) or 0)
-        
+        discount_value = _safe_float(request.form.get('discount_value'), 0)
+
         if discount_type == 'percent':
             discount_amount = int(subtotal * discount_value / 100)
             discount_percent = discount_value
         else:
             discount_amount = int(discount_value * 100)
             discount_percent = (discount_amount / subtotal * 100) if subtotal > 0 else 0
-        
+
         # Parse donation
-        donation_rupees = float(request.form.get('donation', 0) or 0)
+        donation_rupees = _safe_float(request.form.get('donation'), 0)
         donation_paise = int(donation_rupees * 100)
-        
+
         grand_total = subtotal - discount_amount + donation_paise
-        
+
         # Create bill
         bill = Bill(
             bill_number=generate_bill_number(),
@@ -273,7 +404,7 @@ def new_bill():
             created_by=current_user.id,
             notes=request.form.get('notes')
         )
-        
+
         db.session.add(bill)
         db.session.flush()  # Get bill.id
 
@@ -288,28 +419,28 @@ def new_bill():
                 else:
                     existing_map[key] = {'name': value['name'], 'nakshathram': value.get('nakshathram', '')}
             devotee.family_members = dump_family_members(list(existing_map.values()))
-        
+
         # Add bill items
         for item_data in items_data:
             bill_item = BillItem(
                 bill_id=bill.id,
                 item_type=item_data['type'],
-                item_id=item_data['id'],
+                item_id=item_data['service_id'],
                 item_name=item_data['name'],
                 quantity=item_data['quantity'],
                 unit_price=item_data['unit_price'],
                 total_price=item_data['total_price']
             )
             db.session.add(bill_item)
-            
+            db.session.flush()
             # Update inventory for retail items
             if item_data['type'] == 'RETAIL':
-                inventory = InventoryItem.query.get(item_data['id'])
+                inventory = InventoryItem.query.get(item_data['service_id'])
                 inventory.current_stock -= item_data['quantity']
-                
+
                 # Create stock transaction
                 stock_txn = StockTransaction(
-                    item_id=item_data['id'],
+                    item_id=item_data['service_id'],
                     transaction_type='OUT',
                     quantity=item_data['quantity'],
                     reference_type='SALE',
@@ -317,9 +448,32 @@ def new_bill():
                     created_by=current_user.id
                 )
                 db.session.add(stock_txn)
-        
-        db.session.commit()
-        
+
+            # Save Pooja Booking to datebase after bill is created to get the bill.id for reference
+            
+            # Add Pooja details to Pooja Booking for relavant poojas
+            item_service = item_data.get('service')
+            if item_data['type'] == 'POOJA' and item_service and item_service.add_to_booking:
+                booking = PoojaBooking(
+                    booking_number='temp',
+                    bill_id=bill.id,
+                    devotee_id=devotee_id,
+                    service_id=item_data['service_id'],
+                    scheduled_date=datetime.strptime(pooja_date, '%Y-%m-%d') if pooja_date else None,
+                    booking_date=datetime.utcnow(),
+                    special_instructions=bill.notes,
+                    quantity=bill_item.quantity,
+                    total_amount=bill_item.total_price,
+                    advance_paid=bill_item.total_price,
+                    status='BOOKED',
+                    created_by=current_user.id
+                )
+                db.session.add(booking)
+                db.session.flush()
+                booking.booking_number = f'PB-{datetime.utcnow():%Y%m%d}-{booking.id:03d}'
+           
+            db.session.commit()
+
         flash(f'Bill {bill.bill_number} created successfully!', 'success')
         return redirect(url_for('billing.view_bill', id=bill.id))
     

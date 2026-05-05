@@ -30,8 +30,7 @@ def index():
     # Payment mode breakdown
     cash_total = sum(bill.grand_total for bill in today_bills if bill.payment_mode == 'Cash')
     upi_total = sum(bill.grand_total for bill in today_bills if bill.payment_mode == 'UPI')
-    card_total = sum(bill.grand_total for bill in today_bills if bill.payment_mode == 'Card')
-    dd_total = sum(bill.grand_total for bill in today_bills if bill.payment_mode == 'DD')
+    credit_total = sum(bill.grand_total for bill in today_bills if bill.payment_mode == 'Credit')
     
     # Today's bookings
     today_bookings = PoojaBooking.query.filter(
@@ -79,8 +78,7 @@ def index():
                          bills_count=bills_count,
                          cash_total=cash_total,
                          upi_total=upi_total,
-                         card_total=card_total,
-                         dd_total=dd_total,
+                         credit_total=credit_total,
                          today_bookings_count=len(today_bookings),
                          pending_bookings=pending_bookings,
                          completed_bookings=completed_bookings,

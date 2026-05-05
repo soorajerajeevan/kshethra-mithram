@@ -73,7 +73,7 @@ def services_add():
             default_price=price_paise,
             duration_minutes=int(request.form.get('duration_minutes', 30)),
             max_bookings_per_day=int(request.form.get('max_bookings_per_day', 10)),
-            requires_priest=request.form.get('requires_priest') == 'on'
+            add_to_booking=request.form.get('add_to_booking') == 'on'
         )
         
         db.session.add(service)
@@ -107,7 +107,7 @@ def services_edit(id):
         service.default_price = price_paise
         service.duration_minutes = int(request.form.get('duration_minutes', 30))
         service.max_bookings_per_day = int(request.form.get('max_bookings_per_day', 10))
-        service.requires_priest = request.form.get('requires_priest') == 'on'
+        service.add_to_booking = request.form.get('add_to_booking') == 'on'
         service.is_active = request.form.get('is_active') == 'on'
         
         db.session.commit()
@@ -306,6 +306,24 @@ def bookings_complete(id):
     
     return redirect(url_for('poojas.bookings_view', id=id))
 
+@bp.route('/bookings/<int:id>/complete-only', methods=['POST'])
+@login_required
+def bookings_complete_only(id):
+    """Mark booking as completed (no billing redirect)"""
+
+    booking = PoojaBooking.query.get_or_404(id)
+
+    if booking.status == 'COMPLETED':
+        flash('This booking is already completed!', 'warning')
+
+    booking.status = 'COMPLETED'
+    booking.completed_at = datetime.utcnow()
+
+    db.session.commit()
+
+    flash('Booking marked as completed successfully!', 'success')
+
+    return redirect(url_for('dashboard.index'))
 
 @bp.route('/bookings/<int:id>/cancel', methods=['POST'])
 @login_required

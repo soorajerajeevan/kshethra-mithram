@@ -20,7 +20,17 @@
             </div>
         </form>
         <table class="table">
-            <thead><tr><th>Malayalam Name</th><th>English Name</th><th>Category</th><th>Price</th><th>Duration</th><th>Actions</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Malayalam Name</th>
+                    <th>English Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Duration</th>
+                    <th>Show In Booking</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
             <tbody>
                 {% for service in services %}
                 <tr>
@@ -29,6 +39,11 @@
                     <td><span class="badge bg-info">{{ service.category }}</span></td>
                     <td>{{ service.default_price|currency }}</td>
                     <td>{{ service.duration_minutes }} min</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if service.add_to_booking else 'secondary' }}">
+                            {{ 'Yes' if service.add_to_booking else 'No' }}
+                        </span>
+                    </td>
                     <td>
                         <a href="{{ url_for('poojas.services_edit', id=service.id) }}" class="btn btn-sm btn-warning">Edit</a>
                     </td>

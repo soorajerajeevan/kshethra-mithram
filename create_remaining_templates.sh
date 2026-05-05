@@ -86,8 +86,8 @@ cat > app/templates/poojas/services_add.html << 'TEMPLATE'
                         <textarea name="description" class="form-control" rows="3"></textarea>
                     </div>
                     <div class="form-check mb-3">
-                        <input type="checkbox" name="requires_priest" class="form-check-input" id="requiresPriest" checked>
-                        <label class="form-check-label" for="requiresPriest">Requires Priest</label>
+                        <input type="checkbox" name="add_to_booking" class="form-check-input" id="addToBooking" checked>
+                        <label class="form-check-label" for="addToBooking">Add to Booking</label>
                     </div>
                     <button type="submit" class="btn btn-primary">Add Service</button>
                     <a href="{{ url_for('poojas.services_list') }}" class="btn btn-secondary">Cancel</a>
@@ -143,8 +143,8 @@ cat > app/templates/poojas/services_edit.html << 'TEMPLATE'
                         <textarea name="description" class="form-control" rows="3">{{ service.description or '' }}</textarea>
                     </div>
                     <div class="form-check mb-3">
-                        <input type="checkbox" name="requires_priest" class="form-check-input" id="requiresPriest" {% if service.requires_priest %}checked{% endif %}>
-                        <label class="form-check-label" for="requiresPriest">Requires Priest</label>
+                        <input type="checkbox" name="add_to_booking" class="form-check-input" id="requiresPriest" {% if service.add_to_booking %}checked{% endif %}>
+                        <label class="form-check-label" for="requiresPriest">Show In Calendar</label>
                     </div>
                     <button type="submit" class="btn btn-primary">Update Service</button>
                     <a href="{{ url_for('poojas.services_list') }}" class="btn btn-secondary">Cancel</a>
