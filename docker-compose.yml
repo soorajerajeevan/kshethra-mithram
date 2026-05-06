@@ -1,12 +1,10 @@
 version: '3.8'
 
 services:
-  web:
+  kshethra-mithram:
     build: .
     container_name: temple_app
 
-    networks:
-      - proxy
     ports:
       - "5000:5000"
 
@@ -21,3 +19,11 @@ services:
       - ./app/static/uploads:/app/app/static/uploads
 
     restart: unless-stopped
+  
+  networks:
+    - proxy
+
+
+networks:
+  proxy:
+    external: true
