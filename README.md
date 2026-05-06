@@ -340,9 +340,8 @@ flask db upgrade
 - Example: `BILL-2024-000123`
 
 ### Monetary Values
-- Stored as integers (paise) to avoid floating-point errors
-- Displayed as ₹ with 2 decimal places
-- Example: 10000 paise = ₹100.00
+- Stored as integers (Rupee) to avoid floating-point errors
+- Displayed as ₹ with 0 decimal places
 
 ### Soft Deletes
 - All deletions are soft (is_active flag)

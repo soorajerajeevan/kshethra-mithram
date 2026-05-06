@@ -68,7 +68,7 @@ cat > app/templates/poojas/services_add.html << 'TEMPLATE'
                         </div>
                         <div class="col-md-6 mb-3">
                             <label>Default Price (₹) *</label>
-                            <input type="number" name="default_price" class="form-control" step="0.01" required>
+                            <input type="number" name="default_price" class="form-control" step="1" required>
                         </div>
                     </div>
                     <div class="row">
@@ -125,7 +125,7 @@ cat > app/templates/poojas/services_edit.html << 'TEMPLATE'
                         </div>
                         <div class="col-md-6 mb-3">
                             <label>Default Price (₹) *</label>
-                            <input type="number" name="default_price" class="form-control" step="0.01" value="{{ (service.default_price / 100)|round(2) }}" required>
+                            <input type="number" name="default_price" class="form-control" step="1" value="{{ (service.default_price)|round(2) }}" required>
                         </div>
                     </div>
                     <div class="row">
@@ -264,11 +264,11 @@ cat > app/templates/poojas/bookings_add.html << 'TEMPLATE'
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label>Custom Price (₹) - Optional</label>
-                            <input type="number" name="custom_price" class="form-control" step="0.01" placeholder="Leave blank for default">
+                            <input type="number" name="custom_price" class="form-control" step="1" placeholder="Leave blank for default">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label>Advance Paid (₹)</label>
-                            <input type="number" name="advance_paid" class="form-control" step="0.01" value="0">
+                            <input type="number" name="advance_paid" class="form-control" step="1" value="0">
                         </div>
                     </div>
                     <div class="mb-3">

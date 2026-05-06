@@ -35,7 +35,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label>Default Price (₹) *</label>
-                            <input type="number" name="default_price" class="form-control" step="1" value="{{ (service.default_price / 100)|round(2) }}" required>
+                            <input type="number" name="default_price" class="form-control" step="1" value="{{ (service.default_price )|round(2) }}" required>
                         </div>
                     </div>
                     <div class="row">

@@ -241,10 +241,10 @@ def export_csv(report_type):
                 bill.bill_number,
                 bill.bill_date.strftime('%d-%b-%Y %I:%M %p'),
                 bill.devotee.full_name,
-                bill.subtotal / 100,
-                bill.discount_amount / 100,
-                bill.donation_amount / 100,
-                bill.grand_total / 100,
+                bill.subtotal ,
+                bill.discount_amount ,
+                bill.donation_amount ,
+                bill.grand_total ,
                 bill.payment_mode
             ])
     
@@ -266,7 +266,7 @@ def export_csv(report_type):
             writer.writerow([
                 stat.item_name,
                 stat.count,
-                stat.revenue / 100
+                stat.revenue 
             ])
     
     # Prepare response

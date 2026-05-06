@@ -7,7 +7,7 @@ endblock %}
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col-md-12">
-            <h2><i class="bi bi-receipt"></i> {% if bill %}Edit Bill - {{ bill.bill_number }}{% else %}New Bill{% endif
+            <h2><i class="bi bi-receipt"></i> {% if bill %}Edit - {{ bill.bill_number }}{% else %}New {% endif
                 %}</h2>
         </div>
     </div>
@@ -686,7 +686,7 @@ endblock %}
         if (select && select.value) {
             const selectedOption = select.options[select.selectedIndex];
             const price = Number(selectedOption.dataset.price || 0);
-            priceInput.value = (price / 100).toFixed(2);
+            priceInput.value = (price ).toFixed(2);
         } else {
             priceInput.value = '';
         }
@@ -727,7 +727,7 @@ endblock %}
         });
         const discountType = document.getElementById('discountType').value;
         const discountValue = parseFloat(document.getElementById('discountValue').value) || 0;
-        let discount = discountType === 'percent' ? subtotal * (discountValue / 100) : discountValue;
+        let discount = discountType === 'percent' ? subtotal * (discountValue ) : discountValue;
         const donation = parseFloat(document.getElementById('donation').value) || 0;
         const grandTotal = subtotal - discount + donation;
         document.getElementById('subtotalDisplay').textContent = `Rs.${subtotal.toFixed(2)}`;

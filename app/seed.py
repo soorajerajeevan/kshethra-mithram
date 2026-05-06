@@ -160,7 +160,7 @@ def seed_all():
                 malayalam_name=malayalam_name,
                 category='Special Pooja',
                 description='',
-                default_price=int(rate_rupees * 100),
+                default_price=int(rate_rupees),
                 duration_minutes=30,
                 max_bookings_per_day=50,
                 add_to_booking=False

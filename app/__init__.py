@@ -67,7 +67,7 @@ def register_template_filters(app):
         """Format paise to rupees with ₹ symbol"""
         if value is None:
             return '₹0.00'
-        rupees = value / 100.0
+        rupees = value
         return f'₹{rupees:,.2f}'
     
     @app.template_filter('format_date')

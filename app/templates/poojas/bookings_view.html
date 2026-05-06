@@ -36,10 +36,16 @@
         </div>
         <hr>
         {% if booking.status in ['BOOKED', 'CONFIRMED'] %}
-        <form method="POST" action="{{ url_for('poojas.bookings_complete', id=booking.id) }}" class="d-inline">
+        <form method="POST" action="{{ url_for('poojas.bookings_complete', id=booking.id, payment_mode='cash') }}" class="d-inline">
             <input type="hidden" name="generate_bill" value="yes">
             <button type="submit" class="btn btn-success">
-                <i class="bi bi-check-circle"></i> Mark Complete & Generate Bill
+                <i class="bi bi-check-circle"></i> Paid By Cash
+            </button>
+        </form>
+        <form method="POST" action="{{ url_for('poojas.bookings_complete', id=booking.id, payment_mode='upi') }}" class="d-inline">
+            <input type="hidden" name="generate_bill" value="yes">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle"></i> Paid By UPI
             </button>
         </form>
         <form method="POST" action="{{ url_for('poojas.bookings_cancel', id=booking.id) }}" class="d-inline">

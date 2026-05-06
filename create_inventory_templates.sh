@@ -72,11 +72,11 @@ cat > app/templates/inventory/add.html << 'TEMPLATE'
                         </div>
                         <div class="col-md-4 mb-3">
                             <label>Current Stock</label>
-                            <input type="number" name="current_stock" class="form-control" step="0.1" value="0">
+                            <input type="number" name="current_stock" class="form-control" step="1" value="0">
                         </div>
                         <div class="col-md-4 mb-3">
                             <label>Reorder Level</label>
-                            <input type="number" name="reorder_level" class="form-control" step="0.1" value="0">
+                            <input type="number" name="reorder_level" class="form-control" step="1" value="0">
                         </div>
                     </div>
                     <div class="row">
@@ -86,11 +86,11 @@ cat > app/templates/inventory/add.html << 'TEMPLATE'
                         </div>
                         <div class="col-md-4 mb-3">
                             <label>Cost Price (₹)</label>
-                            <input type="number" name="cost_price" class="form-control" step="0.01" value="0">
+                            <input type="number" name="cost_price" class="form-control" step="1" value="0">
                         </div>
                         <div class="col-md-4 mb-3">
                             <label>Selling Price (₹)</label>
-                            <input type="number" name="selling_price" class="form-control" step="0.01" value="0">
+                            <input type="number" name="selling_price" class="form-control" step="1" value="0">
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Add Item</button>
@@ -191,7 +191,7 @@ cat > app/templates/inventory/edit.html << 'TEMPLATE'
                         </div>
                         <div class="col-md-4 mb-3">
                             <label>Reorder Level</label>
-                            <input type="number" name="reorder_level" class="form-control" step="0.1" value="{{ item.reorder_level }}">
+                            <input type="number" name="reorder_level" class="form-control" step="1" value="{{ item.reorder_level }}">
                         </div>
                     </div>
                     <div class="row">
@@ -201,11 +201,11 @@ cat > app/templates/inventory/edit.html << 'TEMPLATE'
                         </div>
                         <div class="col-md-4 mb-3">
                             <label>Cost Price (₹)</label>
-                            <input type="number" name="cost_price" class="form-control" step="0.01" value="{{ (item.cost_price / 100)|round(2) }}">
+                            <input type="number" name="cost_price" class="form-control" step="1" value="{{ (item.cost_price )|round(2) }}">
                         </div>
                         <div class="col-md-4 mb-3">
                             <label>Selling Price (₹)</label>
-                            <input type="number" name="selling_price" class="form-control" step="0.01" value="{{ (item.selling_price / 100)|round(2) }}">
+                            <input type="number" name="selling_price" class="form-control" step="1" value="{{ (item.selling_price)|round(2) }}">
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Update</button>
@@ -231,7 +231,7 @@ cat > app/templates/inventory/stock_in.html << 'TEMPLATE'
                 <form method="POST">
                     <div class="mb-3">
                         <label>Quantity to Add *</label>
-                        <input type="number" name="quantity" class="form-control" step="0.1" min="0.1" required autofocus>
+                        <input type="number" name="quantity" class="form-control" step="1" min="0.1" required autofocus>
                     </div>
                     <div class="mb-3">
                         <label>Supplier</label>
@@ -239,7 +239,7 @@ cat > app/templates/inventory/stock_in.html << 'TEMPLATE'
                     </div>
                     <div class="mb-3">
                         <label>Cost (₹)</label>
-                        <input type="number" name="cost" class="form-control" step="0.01">
+                        <input type="number" name="cost" class="form-control" step="1">
                     </div>
                     <div class="mb-3">
                         <label>Notes</label>
@@ -268,7 +268,7 @@ cat > app/templates/inventory/stock_out.html << 'TEMPLATE'
                 <form method="POST">
                     <div class="mb-3">
                         <label>Quantity to Remove *</label>
-                        <input type="number" name="quantity" class="form-control" step="0.1" min="0.1" max="{{ item.current_stock }}" required autofocus>
+                        <input type="number" name="quantity" class="form-control" step="1" min="0.1" max="{{ item.current_stock }}" required autofocus>
                     </div>
                     <div class="mb-3">
                         <label>Reason/Notes</label>

@@ -66,8 +66,8 @@ def add():
             current_stock=float(request.form.get('current_stock', 0)),
             reorder_level=float(request.form.get('reorder_level', 0)),
             supplier=request.form.get('supplier'),
-            cost_price=int(cost_rupees * 100),
-            selling_price=int(selling_rupees * 100)
+            cost_price=int(cost_rupees),
+            selling_price=int(selling_rupees)
         )
         
         db.session.add(item)
@@ -111,8 +111,8 @@ def edit(id):
         item.unit = request.form.get('unit')
         item.reorder_level = float(request.form.get('reorder_level', 0))
         item.supplier = request.form.get('supplier')
-        item.cost_price = int(cost_rupees * 100)
-        item.selling_price = int(selling_rupees * 100)
+        item.cost_price = int(cost_rupees)
+        item.selling_price = int(selling_rupees)
         
         db.session.commit()
         
@@ -151,7 +151,7 @@ def stock_in(id):
     if request.method == 'POST':
         quantity = float(request.form.get('quantity'))
         cost_rupees = float(request.form.get('cost', 0) or 0)
-        cost_paise = int(cost_rupees * 100)
+        cost_paise = int(cost_rupees)
         
         # Update stock
         item.current_stock += quantity

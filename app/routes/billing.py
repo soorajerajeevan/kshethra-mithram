@@ -326,7 +326,7 @@ def new_bill():
                     elif not family_member_map[key].get('nakshathram') and pooja_nakshathram:
                         family_member_map[key]['nakshathram'] = pooja_nakshathram
                 custom_price = request.form.get(f'pooja_price_{i}')
-                price_paise = int(_safe_float(custom_price) * 100) if custom_price else service.default_price
+                price_paise = int(_safe_float(custom_price)) if custom_price else service.default_price
                 total_price = int(price_paise * quantity)
 
                 item_name_parts = [service.display_name]
@@ -357,7 +357,7 @@ def new_bill():
                     continue
                 quantity = _safe_float(request.form.get(f'retail_quantity_{i}'), 1)
                 custom_price = request.form.get(f'retail_price_{i}')
-                unit_price = int(_safe_float(custom_price) * 100) if custom_price else item.selling_price
+                unit_price = int(_safe_float(custom_price)) if custom_price else item.selling_price
                 total_price = int(unit_price * quantity)
 
                 items_data.append({
@@ -378,17 +378,16 @@ def new_bill():
         discount_value = _safe_float(request.form.get('discount_value'), 0)
 
         if discount_type == 'percent':
-            discount_amount = int(subtotal * discount_value / 100)
+            discount_amount = int(subtotal * discount_value)
             discount_percent = discount_value
         else:
-            discount_amount = int(discount_value * 100)
-            discount_percent = (discount_amount / subtotal * 100) if subtotal > 0 else 0
+            discount_amount = int(discount_value)
+            discount_percent = (discount_amount / subtotal) if subtotal > 0 else 0
 
         # Parse donation
-        donation_rupees = _safe_float(request.form.get('donation'), 0)
-        donation_paise = int(donation_rupees * 100)
+        donation_rupees = int(_safe_float(request.form.get('donation'), 0))
 
-        grand_total = subtotal - discount_amount + donation_paise
+        grand_total = subtotal - discount_amount + donation_rupees
 
         # Create bill
         bill = Bill(
@@ -397,7 +396,7 @@ def new_bill():
             subtotal=subtotal,
             discount_amount=discount_amount,
             discount_percent=discount_percent,
-            donation_amount=donation_paise,
+            donation_amount=donation_rupees,
             grand_total=grand_total,
             payment_mode=request.form.get('payment_mode'),
             payment_reference=request.form.get('payment_reference'),
@@ -453,6 +452,7 @@ def new_bill():
             
             # Add Pooja details to Pooja Booking for relavant poojas
             item_service = item_data.get('service')
+            advance_paid = item_data['total_price'] if request.form.get('payment_mode') != 'Credit' else 0
             if item_data['type'] == 'POOJA' and item_service and item_service.add_to_booking:
                 booking = PoojaBooking(
                     booking_number='temp',
@@ -464,7 +464,7 @@ def new_bill():
                     special_instructions=bill.notes,
                     quantity=bill_item.quantity,
                     total_amount=bill_item.total_price,
-                    advance_paid=bill_item.total_price,
+                    advance_paid=advance_paid,
                     status='BOOKED',
                     created_by=current_user.id
                 )
@@ -592,7 +592,8 @@ def create_from_booking(booking_id):
 def view_bill(id):
     """View bill details"""
     bill = Bill.query.get_or_404(id)
-    return render_template('billing/view_bill.html', bill=bill)
+    is_paid = bill.payment_mode != 'Credit'
+    return render_template('billing/view_bill.html', bill=bill, is_paid=is_paid)
 
 
 @bp.route('/<int:id>/edit', methods=['GET', 'POST'])
@@ -630,7 +631,7 @@ def edit_bill(id):
                 pooja_nakshathram = (request.form.get(f'pooja_nakshathram_{i}') or '').strip()
                 quantity = max(float(request.form.get(f'pooja_quantity_{i}', 1) or 1), 1)
                 custom_price = request.form.get(f'pooja_price_{i}')
-                price_paise = int(float(custom_price) * 100) if custom_price else service.default_price
+                price_paise = int(float(custom_price)) if custom_price else service.default_price
                 total_price = int(price_paise * quantity)
 
                 item_name_parts = [service.display_name]
@@ -659,7 +660,7 @@ def edit_bill(id):
                     continue
                 quantity = float(request.form.get(f'retail_quantity_{i}', 1))
                 custom_price = request.form.get(f'retail_price_{i}')
-                unit_price = int(float(custom_price) * 100) if custom_price else item.selling_price
+                unit_price = int(float(custom_price)) if custom_price else item.selling_price
                 total_price = int(unit_price * quantity)
                 
                 items_data.append({
@@ -686,15 +687,15 @@ def edit_bill(id):
         discount_value = float(request.form.get('discount_value', 0) or 0)
         
         if discount_type == 'percent':
-            discount_amount = int(subtotal * discount_value / 100)
+            discount_amount = int(subtotal * discount_value )
             discount_percent = discount_value
         else:
-            discount_amount = int(discount_value * 100)
-            discount_percent = (discount_amount / subtotal * 100) if subtotal > 0 else 0
+            discount_amount = int(discount_value)
+            discount_percent = (discount_amount / subtotal) if subtotal > 0 else 0
         
         # Parse donation
         donation_rupees = float(request.form.get('donation', 0) or 0)
-        donation_paise = int(donation_rupees * 100)
+        donation_paise = int(donation_rupees)
         
         bill.subtotal = subtotal
         bill.discount_amount = discount_amount
@@ -757,8 +758,8 @@ def edit_bill(id):
         'devotee_id': bill.devotee_id,
         'payment_mode': bill.payment_mode,
         'discount_type': 'percent' if bill.discount_percent > 0 else 'amount',
-        'discount_value': bill.discount_percent if bill.discount_percent > 0 else bill.discount_amount / 100,
-        'donation_amount': bill.donation_amount / 100,
+        'discount_value': bill.discount_percent if bill.discount_percent > 0 else bill.discount_amount ,
+        'donation_amount': bill.donation_amount ,
         'payment_reference': bill.payment_reference,
         'notes': bill.notes,
         'items': [{
@@ -766,8 +767,8 @@ def edit_bill(id):
             'type': item.item_type,
             'name': item.item_name,
             'quantity': item.quantity,
-            'unit_price': item.unit_price / 100,
-            'total_price': item.total_price / 100
+            'unit_price': item.unit_price ,
+            'total_price': item.total_price 
         } for item in bill.items]
     }, ensure_ascii=False)
     
@@ -878,13 +879,13 @@ Date: {bill.bill_date.strftime('%d-%b-%Y %I:%M %p')}
 '''
     
     for item in bill.items:
-        price = item.total_price / 100
+        price = item.total_price 
         message += f'• {item.item_name}: ₹{price:.2f}\n'
     
-    subtotal = bill.subtotal / 100
-    discount = bill.discount_amount / 100
-    donation = bill.donation_amount / 100
-    total = bill.grand_total / 100
+    subtotal = bill.subtotal 
+    discount = bill.discount_amount 
+    donation = bill.donation_amount 
+    total = bill.grand_total 
     
     message += f'\n*Subtotal:* ₹{subtotal:.2f}'
     

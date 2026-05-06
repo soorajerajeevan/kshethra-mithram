@@ -56,7 +56,6 @@
     </div>
 </div>
 <script>
-    const devotees = {{ devotees|default ([], true) | tojson }};
     function devoteeLabel(d) { return `${d.devotee_id} - ${d.full_name} (${d.phone || 'No phone'})`; }
     const tomSelectInstances = {};
     function initSearchableSelect(selector, options = {}) {
@@ -85,8 +84,6 @@
             },
             onChange: function (value) {
                 toggleNewDevoteePhone(value);
-                refreshAllPoojaFamilyOptions();
-                syncPrimaryDevoteeToFirstPooja();
                 updateEditDevoteeButton();
             }
         });

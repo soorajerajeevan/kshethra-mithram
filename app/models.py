@@ -63,7 +63,7 @@ class PoojaService(db.Model):
     malayalam_name = db.Column(db.String(200), index=True)
     category = db.Column(db.String(100))  # Daily Archana, Special Pooja, Homam, Festival
     description = db.Column(db.Text)
-    default_price = db.Column(db.Integer, nullable=False)  # in paise
+    default_price = db.Column(db.Integer, nullable=False)  # in Rupee
     duration_minutes = db.Column(db.Integer, default=30)
     max_bookings_per_day = db.Column(db.Integer, default=10)
     add_to_booking = db.Column(db.Boolean, default=True)
@@ -105,8 +105,8 @@ class InventoryItem(db.Model):
     current_stock = db.Column(db.Float, default=0.0, nullable=False)
     reorder_level = db.Column(db.Float, default=0.0)
     supplier = db.Column(db.String(200))
-    cost_price = db.Column(db.Integer, default=0)  # in paise per unit
-    selling_price = db.Column(db.Integer, default=0)  # in paise per unit
+    cost_price = db.Column(db.Integer, default=0)  # in Rupee per unit
+    selling_price = db.Column(db.Integer, default=0)  # in Rupee per unit
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -133,7 +133,7 @@ class StockTransaction(db.Model):
     reference_type = db.Column(db.String(50))  # PURCHASE, SALE, POOJA, ADJUSTMENT
     reference_id = db.Column(db.Integer)  # Bill ID or Booking ID
     supplier = db.Column(db.String(200))
-    cost = db.Column(db.Integer, default=0)  # in paise
+    cost = db.Column(db.Integer, default=0)  # in Rupee
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
@@ -150,12 +150,13 @@ class Bill(db.Model):
     bill_number = db.Column(db.String(50), unique=True, nullable=False, index=True)  # BILL-2024-00456
     devotee_id = db.Column(db.Integer, db.ForeignKey('devotees.id'), nullable=False)
     bill_date = db.Column(db.DateTime, default=datetime.now, nullable=False, index=True)
-    subtotal = db.Column(db.Integer, nullable=False)  # in paise
-    discount_amount = db.Column(db.Integer, default=0)  # in paise
+    subtotal = db.Column(db.Integer, nullable=False)  # in Rupee
+    discount_amount = db.Column(db.Integer, default=0)  # in Rupee
     discount_percent = db.Column(db.Float, default=0.0)
-    donation_amount = db.Column(db.Integer, default=0)  # in paise
-    tax_amount = db.Column(db.Integer, default=0)  # in paise (for future GST)
-    grand_total = db.Column(db.Integer, nullable=False)  # in paise
+    donation_amount = db.Column(db.Integer, default=0)  # in Rupee
+    tax_amount = db.Column(db.Integer, default=0)  # in Rupee (for future GST)
+    advance_paid = db.Column(db.Integer, default=0)  # in Rupee
+    grand_total = db.Column(db.Integer, nullable=False)  # in Rupee
     payment_mode = db.Column(db.String(20), nullable=False)  # Cash, UPI, Card, DD
     payment_reference = db.Column(db.String(100))  # UPI ID, Card last 4 digits, DD number
     booking_id = db.Column(db.Integer, db.ForeignKey('pooja_bookings.id'))  # if from booking
@@ -181,8 +182,8 @@ class BillItem(db.Model):
     item_id = db.Column(db.Integer)  # PoojaService.id or InventoryItem.id
     item_name = db.Column(db.String(200), nullable=False)
     quantity = db.Column(db.Float, default=1.0, nullable=False)
-    unit_price = db.Column(db.Integer, nullable=False)  # in paise
-    total_price = db.Column(db.Integer, nullable=False)  # in paise
+    unit_price = db.Column(db.Integer, nullable=False)  # in Rupee
+    total_price = db.Column(db.Integer, nullable=False)  # in Rupee
     
     def __repr__(self):
         return f'<BillItem {self.item_name}>'
@@ -199,9 +200,9 @@ class PoojaBooking(db.Model):
     scheduled_date = db.Column(db.Date, nullable=False, index=True)
     quantity = db.Column(db.Integer, default=1)
     special_instructions = db.Column(db.Text)
-    advance_paid = db.Column(db.Integer, default=0)  # in paise
-    total_amount = db.Column(db.Integer, nullable=False)  # in paise
-    balance_amount = db.Column(db.Integer, default=0)  # in paise
+    advance_paid = db.Column(db.Integer, default=0)  # in Rupee
+    total_amount = db.Column(db.Integer, nullable=False)  # in Rupee
+    balance_amount = db.Column(db.Integer, default=0)  # in Rupee
     status = db.Column(db.String(20), default='BOOKED')  # BOOKED, CONFIRMED, COMPLETED, CANCELLED
     completed_at = db.Column(db.DateTime)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))

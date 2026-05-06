@@ -1,8 +1,13 @@
+from email import errors
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
+from flask_wtf import form
 from app import db
 from app.models import PoojaService, ServiceMaterial, InventoryItem, PoojaBooking, Devotee, Bill, BillItem
 from datetime import datetime, date, timedelta
+
+from app.routes.devotees import generate_devotee_id
 
 bp = Blueprint('poojas', __name__, url_prefix='/poojas')
 
@@ -62,7 +67,6 @@ def services_add():
     if request.method == 'POST':
         # Convert rupees to paise
         price_rupees = float(request.form.get('default_price', 0))
-        price_paise = int(price_rupees * 100)
         
         service = PoojaService(
             english_name=request.form.get('english_name'),
@@ -70,7 +74,7 @@ def services_add():
             name=request.form.get('malayalam_name') or request.form.get('english_name'),
             category=request.form.get('category'),
             description=request.form.get('description'),
-            default_price=price_paise,
+            default_price=price_rupees,
             duration_minutes=int(request.form.get('duration_minutes', 30)),
             max_bookings_per_day=int(request.form.get('max_bookings_per_day', 10)),
             add_to_booking=request.form.get('add_to_booking') == 'on'
@@ -97,14 +101,13 @@ def services_edit(id):
     
     if request.method == 'POST':
         price_rupees = float(request.form.get('default_price', 0))
-        price_paise = int(price_rupees * 100)
         
         service.english_name = request.form.get('english_name')
         service.malayalam_name = request.form.get('malayalam_name')
         service.name = request.form.get('malayalam_name') or request.form.get('english_name')
         service.category = request.form.get('category')
         service.description = request.form.get('description')
-        service.default_price = price_paise
+        service.default_price = price_rupees
         service.duration_minutes = int(request.form.get('duration_minutes', 30))
         service.max_bookings_per_day = int(request.form.get('max_bookings_per_day', 10))
         service.add_to_booking = request.form.get('add_to_booking') == 'on'
@@ -218,7 +221,47 @@ def bookings_list():
 def bookings_add():
     """Add new pooja booking"""
     if request.method == 'POST':
-        devotee_id = int(request.form.get('devotee_id'))
+        
+        errors = []        
+        # --- 1. Devotee validation ---
+        devotee_raw = (request.form.get('devotee_id') or '').strip()
+        if not devotee_raw:
+            errors.append('Please select a devotee or enter a new devotee name.')
+        elif devotee_raw.startswith('NEW::'):
+            new_name = devotee_raw.replace('NEW::', '', 1).strip()
+            if not new_name:
+                errors.append('New devotee name cannot be empty.')
+            new_phone = (request.form.get('new_devotee_phone') or '').strip()
+            if not new_phone:
+                errors.append('Phone number is required for a new devotee.')
+        if errors:
+            for err in errors:
+                flash(err, 'danger')
+            # Re-render the form instead of redirecting so flash messages
+            # are visible immediately (redirect would lose them on some
+            # setups without a proper session backend).
+            return redirect(url_for('poojas.bookings_add'))
+        
+        if devotee_raw.startswith('NEW::'):
+            new_name = devotee_raw.replace('NEW::', '', 1).strip()
+            new_devotee_phone = (request.form.get('new_devotee_phone') or '').strip()
+            new_devotee_house_name = (request.form.get('new_devotee_house_name') or '').strip()
+       
+
+            devotee = Devotee(
+                devotee_id=generate_devotee_id(),
+                full_name=new_name,
+                phone=new_devotee_phone,
+                gotra=new_devotee_house_name,
+                is_active=True
+            )
+            db.session.add(devotee)
+            db.session.flush()
+            devotee_id = devotee.id
+        else:
+            devotee_id = int(devotee_raw)
+            devotee = Devotee.query.get(devotee_id)        
+        
         service_id = int(request.form.get('service_id'))
         service = PoojaService.query.get(service_id)
         
@@ -237,16 +280,15 @@ def bookings_add():
         
         # Parse advance payment
         advance_rupees = float(request.form.get('advance_paid', 0) or 0)
-        advance_paise = int(advance_rupees * 100)
         
         # Get custom price or use default
         custom_price = request.form.get('custom_price')
         if custom_price:
-            total_paise = int(float(custom_price) * 100)
+            total = int(float(custom_price))
         else:
-            total_paise = service.default_price
+            total = service.default_price
         
-        balance_paise = total_paise - advance_paise
+        balance = total - advance_rupees
         
         booking = PoojaBooking(
             booking_number=generate_booking_number(),
@@ -254,9 +296,9 @@ def bookings_add():
             service_id=service_id,
             scheduled_date=scheduled_date,
             special_instructions=request.form.get('special_instructions'),
-            advance_paid=advance_paise,
-            total_amount=total_paise,
-            balance_amount=balance_paise,
+            advance_paid=advance_rupees,
+            total_amount=total,
+            balance_amount=balance,
             status='BOOKED',
             created_by=current_user.id
         )
@@ -285,13 +327,19 @@ def bookings_view(id):
 
 @bp.route('/bookings/<int:id>/complete', methods=['POST'])
 @login_required
-def bookings_complete(id):
+def bookings_complete(id, payment_mode=None):
     """Mark booking as completed and optionally generate bill"""
     booking = PoojaBooking.query.get_or_404(id)
     
     if booking.status == 'COMPLETED':
         flash('This booking is already completed!', 'warning')
         return redirect(url_for('poojas.bookings_view', id=id))
+    
+    if booking.bill and booking.bill.payment_mode == 'Credit':
+        booking.bill.payment_mode = payment_mode or 'Cash'  # Force mark as paid if credit
+        booking.bill.payment_reference = f'Marked paid on completion of booking {booking.booking_number}'
+        db.session.commit()
+        flash('This booking was unpaid. It has now been marked as paid.', 'success')
     
     booking.status = 'COMPLETED'
     booking.completed_at = datetime.utcnow()
@@ -316,6 +364,10 @@ def bookings_complete_only(id):
     if booking.status == 'COMPLETED':
         flash('This booking is already completed!', 'warning')
 
+    if booking.bill and booking.bill.payment_mode == 'Credit':
+        flash('This booking is unpaid. Please complete the payment first.', 'error')
+        return redirect(url_for('poojas.bookings_view', id=id))
+    
     booking.status = 'COMPLETED'
     booking.completed_at = datetime.utcnow()
 
