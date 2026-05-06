@@ -5,6 +5,8 @@ services:
     build: .
     container_name: temple_app
 
+    networks:
+      - proxy
     ports:
       - "5000:5000"
 
