@@ -279,7 +279,7 @@ def bookings_add():
             return redirect(url_for('poojas.bookings_add'))
         
         # Parse advance payment
-        advance_rupees = float(request.form.get('advance_paid', 0) or 0)
+        advance_rupees = float(request.form.get('amount_paid', 0) or 0)
         
         # Get custom price or use default
         custom_price = request.form.get('custom_price')
@@ -296,7 +296,7 @@ def bookings_add():
             service_id=service_id,
             scheduled_date=scheduled_date,
             special_instructions=request.form.get('special_instructions'),
-            advance_paid=advance_rupees,
+            amount_paid=advance_rupees,
             total_amount=total,
             balance_amount=balance,
             status='BOOKED',

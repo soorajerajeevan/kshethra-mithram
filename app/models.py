@@ -155,7 +155,7 @@ class Bill(db.Model):
     discount_percent = db.Column(db.Float, default=0.0)
     donation_amount = db.Column(db.Integer, default=0)  # in Rupee
     tax_amount = db.Column(db.Integer, default=0)  # in Rupee (for future GST)
-    advance_paid = db.Column(db.Integer, default=0)  # in Rupee
+    amount_paid = db.Column(db.Integer, default=0)  # in Rupee
     grand_total = db.Column(db.Integer, nullable=False)  # in Rupee
     payment_mode = db.Column(db.String(20), nullable=False)  # Cash, UPI, Card, DD
     payment_reference = db.Column(db.String(100))  # UPI ID, Card last 4 digits, DD number
@@ -200,7 +200,7 @@ class PoojaBooking(db.Model):
     scheduled_date = db.Column(db.Date, nullable=False, index=True)
     quantity = db.Column(db.Integer, default=1)
     special_instructions = db.Column(db.Text)
-    advance_paid = db.Column(db.Integer, default=0)  # in Rupee
+    amount_paid = db.Column(db.Integer, default=0)  # in Rupee
     total_amount = db.Column(db.Integer, nullable=False)  # in Rupee
     balance_amount = db.Column(db.Integer, default=0)  # in Rupee
     status = db.Column(db.String(20), default='BOOKED')  # BOOKED, CONFIRMED, COMPLETED, CANCELLED

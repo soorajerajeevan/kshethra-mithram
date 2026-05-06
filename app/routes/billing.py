@@ -388,7 +388,10 @@ def new_bill():
         donation_rupees = int(_safe_float(request.form.get('donation'), 0))
 
         grand_total = subtotal - discount_amount + donation_rupees
-
+        amount_paid = 0
+        if request.form.get('payment_mode') != 'Credit':
+            amount_paid = grand_total
+        
         # Create bill
         bill = Bill(
             bill_number=generate_bill_number(),
@@ -398,6 +401,7 @@ def new_bill():
             discount_percent=discount_percent,
             donation_amount=donation_rupees,
             grand_total=grand_total,
+            amount_paid=amount_paid,
             payment_mode=request.form.get('payment_mode'),
             payment_reference=request.form.get('payment_reference'),
             created_by=current_user.id,
@@ -452,7 +456,12 @@ def new_bill():
             
             # Add Pooja details to Pooja Booking for relavant poojas
             item_service = item_data.get('service')
-            advance_paid = item_data['total_price'] if request.form.get('payment_mode') != 'Credit' else 0
+            
+            amount_paid = 0
+            if request.form.get('payment_mode') != 'Credit':
+                amount_paid = grand_total
+            amount_paid = item_data['total_price'] if request.form.get('payment_mode') != 'Credit' else 0
+            
             if item_data['type'] == 'POOJA' and item_service and item_service.add_to_booking:
                 booking = PoojaBooking(
                     booking_number='temp',
@@ -464,7 +473,7 @@ def new_bill():
                     special_instructions=bill.notes,
                     quantity=bill_item.quantity,
                     total_amount=bill_item.total_price,
-                    advance_paid=advance_paid,
+                    amount_paid=amount_paid,
                     status='BOOKED',
                     created_by=current_user.id
                 )
@@ -560,6 +569,7 @@ def create_from_booking(booking_id):
         discount_amount=0,
         donation_amount=0,
         grand_total=booking.balance_amount,
+        amount_paid=booking.amount_paid,
         payment_mode='Cash',  # Default, can be edited
         booking_id=booking.id,
         created_by=current_user.id,
@@ -592,7 +602,7 @@ def create_from_booking(booking_id):
 def view_bill(id):
     """View bill details"""
     bill = Bill.query.get_or_404(id)
-    is_paid = bill.payment_mode != 'Credit'
+    is_paid = bill.payment_mode == 'Credit' and bill.grand_total - bill.amount_paid == 0
     return render_template('billing/view_bill.html', bill=bill, is_paid=is_paid)
 
 

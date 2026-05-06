@@ -32,7 +32,7 @@ class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'temple_dev.db')
+        'sqlite:///' + os.path.join(basedir, 'database', 'temple_dev.db')
     SQLALCHEMY_ECHO = True  # Log SQL queries
 
 

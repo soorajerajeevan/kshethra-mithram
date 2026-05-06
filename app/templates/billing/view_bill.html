@@ -43,6 +43,7 @@
                 <h5>Bill Details</h5>
                 <p><strong>Date:</strong> {{ bill.bill_date|format_datetime }}</p>
                 <p><strong>Payment Mode:</strong> {{ bill.payment_mode }}
+                <p><strong>Amount Paid:</strong> {{ bill.amount_paid|currency }}
                 {% if bill.payment_mode == 'Credit' %}
                     <span class="badge bg-danger">Unpaid</span>
                 {% endif %}            

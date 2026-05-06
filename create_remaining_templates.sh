@@ -268,7 +268,7 @@ cat > app/templates/poojas/bookings_add.html << 'TEMPLATE'
                         </div>
                         <div class="col-md-6 mb-3">
                             <label>Advance Paid (₹)</label>
-                            <input type="number" name="advance_paid" class="form-control" step="1" value="0">
+                            <input type="number" name="amount_paid" class="form-control" step="1" value="0">
                         </div>
                     </div>
                     <div class="mb-3">
@@ -321,7 +321,7 @@ cat > app/templates/poojas/bookings_view.html << 'TEMPLATE'
             <div class="col-md-6">
                 <h5>Payment Details</h5>
                 <p><strong>Total Amount:</strong> {{ booking.total_amount|currency }}</p>
-                <p><strong>Advance Paid:</strong> {{ booking.advance_paid|currency }}</p>
+                <p><strong>Advance Paid:</strong> {{ booking.amount_paid|currency }}</p>
                 <p><strong>Balance:</strong> {{ booking.balance_amount|currency }}</p>
                 {% if booking.occasion %}
                 <p><strong>Occasion:</strong> {{ booking.occasion }}</p>
