@@ -167,7 +167,7 @@ For production use with PostgreSQL:
 ## Need Help?
 
 - Check README.md for detailed documentation
-- All monetary values are in paise internally (₹100 = 10000 paise)
+- All monetary values are in Rupee internally 
 - Bill numbers never reset - maintain global sequence
 - All deletions are soft (is_active flag)
 - Database backed up via Settings → Backup
