@@ -1,0 +1,7 @@
+# Copy this file to .dockerenv and update values for production
+FLASK_CONFIG=production
+SECRET_KEY=your-super-secret-key-change-in-production
+DATABASE_URL=sqlite:///temple_app.db
+
+# For PostgreSQL production
+# DATABASE_URL=postgresql://temple_user:temple_pass@db:5432/temple_db

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: temple_app
+
+    ports:
+      - "5000:5000"
+
+    environment:
+      - FLASK_CONFIG=production
+      - FLASK_ENV=production
+      - DATABASE_URL=sqlite:////database/temple_app.db
+      - SECRET_KEY=change-this
+
+    volumes:
+      - ./database:/database
+      - ./app/static/uploads:/app/app/static/uploads
+
+    restart: unless-stopped
