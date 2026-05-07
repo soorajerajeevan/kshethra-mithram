@@ -75,13 +75,14 @@ endblock %}
                     </div>
                     <div class="card-body">
                         <div class="row g-2 mb-2 fw-semibold small text-muted">
-                            <div class="col-md-3">Pooja Name</div>
-                            <div class="col-md-3">Devotee Name</div>
+                            <div class="col-md-2">Pooja Name</div>
+                            <div class="col-md-2">Devotee Name</div>
                             <div class="col-md-2">Nakshathram</div>
-                            <div class="col-md-1">Date</div>
+                            <div class="col-md-2">Date</div>
                             <div class="col-md-1">Qty</div>
                             <div class="col-md-1">Amount</div>
-                            <div class="col-md-1"></div>
+                            <div class="col-md-1 d-flex justify-content-center">Add to List</div>
+                            <div class="col-md-1">Remove</div>
                         </div>
                         <div id="poojaItems"></div>
                         <button type="button" class="btn btn-sm btn-primary" onclick="addPoojaItem()">
@@ -347,7 +348,6 @@ endblock %}
 
     const poojas = {{ poojas_json|default ([], true) | tojson }};
     poojas.sort((a, b) => a.id - b.id);
-    console.log('Loaded poojas:', poojas);
     const retailItems = {{ retail_items_json|default ([], true) | tojson }};
     const devotees = {{ devotees_json|default ([], true) | tojson }};
     const nakshathrams = {{ nakshathrams_json|default ([], true) | tojson }};
@@ -589,13 +589,13 @@ endblock %}
         itemDiv.id = `pooja_item_${poojaCounter}`;
 
         itemDiv.innerHTML = `
-        <div class="col-md-3">
+        <div class="col-md-2">
             <select name="pooja_service_${poojaCounter}" id="pooja_service_${poojaCounter}" class="form-select form-select-sm">
                 <option value="">Select pooja</option>
                 ${poojas.map(p => `<option value="${p.id}" data-price="${p.default_price}">${poojaLabel(p)}|||${p.english_name || ''}</option>`).join('')}
             </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <select name="pooja_devotee_name_${poojaCounter}" id="pooja_devotee_name_${poojaCounter}" class="form-select form-select-sm" required>
                 <option value="">Family member name</option>
             </select>
@@ -606,9 +606,15 @@ endblock %}
                 ${nakshathrams.map(n => `<option value="${n}">${n}</option>`).join('')}
             </select>
         </div>
-        <div class="col-md-1"><input type="date" name="pooja_date_${poojaCounter}" id="pooja_date_${poojaCounter}" class="form-control form-control-sm" required></div>
+        <div class="col-md-2"><input type="date" name="pooja_date_${poojaCounter}" id="pooja_date_${poojaCounter}" class="form-control form-control-sm" required></div>
+       
         <div class="col-md-1"><input type="number" name="pooja_quantity_${poojaCounter}" id="pooja_quantity_${poojaCounter}" class="form-control form-control-sm" value="1" step="1" min="1" onchange="calculateTotal()" required></div>
         <div class="col-md-1"><input type="number" name="pooja_price_${poojaCounter}" id="pooja_price_${poojaCounter}" class="form-control form-control-sm" step="1" min="0" placeholder="Price" onchange="calculateTotal()" required></div>
+         <div class="col-md-1 d-flex justify-content-center">        
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" name="add_to_booking_${poojaCounter}"  id="pooja_booking_toggle_${poojaCounter}" >
+            </div>    
+        </div>
         <div class="col-md-1"><button type="button" class="btn btn-sm btn-danger" onclick="removeItem('pooja_item_${poojaCounter}', 'pooja')"><i class="bi bi-x"></i></button></div>
     `;
 
@@ -684,6 +690,7 @@ endblock %}
     function updatePoojaPrice(index) {
         const select = document.getElementById(`pooja_service_${index}`);
         const priceInput = document.getElementById(`pooja_price_${index}`);
+        console.log(select)
         if (select && select.value) {
             const selectedOption = select.options[select.selectedIndex];
             const price = Number(selectedOption.dataset.price || 0);
@@ -692,8 +699,14 @@ endblock %}
             priceInput.value = '';
         }
         calculateTotal();
-    }
 
+        const toggle = document.getElementById(`pooja_booking_toggle_${index}`);
+        toggle.checked = getAddToBookingDefault(select.value);
+    }
+    function getAddToBookingDefault(poojaId) {
+        const pooja = poojas.find(p => String(p.id) === String(poojaId));
+        return pooja ? pooja.add_to_booking : false;
+    }
     function updateRetailPrice(index) {
         const select = document.querySelector(`select[name="retail_item_${index}"]`);
         const qtyInput = document.getElementById(`retail_quantity_${index}`);
@@ -847,6 +860,7 @@ endblock %}
         const dd = String(today.getDate()).padStart(2, '0');
         return `${yyyy}-${mm}-${dd}`;
     };
+
 
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize font size manager

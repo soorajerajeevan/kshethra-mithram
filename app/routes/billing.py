@@ -339,11 +339,15 @@ def new_bill():
                 items_data.append({
                     'type': 'POOJA',
                     'service_id': service.id,
-                    'name': item_name,
+                    'name': item_name,                    
+                    'member_name': pooja_devotee_name,
+                    'member_nakshathram': pooja_nakshathram,
+                    'date': pooja_date,
                     'quantity': quantity,
                     'unit_price': price_paise,
                     'total_price': total_price,
-                    'service': service
+                    'service': service,
+                    'add_to_booking': request.form.get(f'add_to_booking_{i}') == 'on'
                 })
 
 
@@ -367,7 +371,10 @@ def new_bill():
                     'quantity': quantity,
                     'unit_price': unit_price,
                     'total_price': total_price,
-                    'service': item
+                    'service': item,
+                    'add_to_booking': False,
+                    'member_name': '',
+                    'member_nakshathram': ''
                 })
 
         # Calculate totals
@@ -462,13 +469,15 @@ def new_bill():
                 amount_paid = grand_total
             amount_paid = item_data['total_price'] if request.form.get('payment_mode') != 'Credit' else 0
             
-            if item_data['type'] == 'POOJA' and item_service and item_service.add_to_booking:
+            if item_data['type'] == 'POOJA' and item_data['add_to_booking'] == True:
                 booking = PoojaBooking(
                     booking_number='temp',
                     bill_id=bill.id,
                     devotee_id=devotee_id,
+                    member_name=item_data['member_name'],
+                    member_nakshathram=item_data['member_nakshathram'],
                     service_id=item_data['service_id'],
-                    scheduled_date=datetime.strptime(pooja_date, '%Y-%m-%d') if pooja_date else None,
+                    scheduled_date=datetime.strptime(item_data['date'], '%Y-%m-%d') if item_data['date'] else None,
                     booking_date=datetime.utcnow(),
                     special_instructions=bill.notes,
                     quantity=bill_item.quantity,
@@ -499,6 +508,7 @@ def new_bill():
             'english_name': p.english_name or '',
             'malayalam_name': p.malayalam_name or p.name,
             'default_price': int(p.default_price or 0),
+            'add_to_booking': p.add_to_booking if hasattr(p, 'add_to_booking') else False
         }
         for p in poojas
     ]
@@ -655,6 +665,8 @@ def edit_bill(id):
                     'type': 'POOJA',
                     'id': service.id,
                     'name': item_name,
+                    'member_name': pooja_devotee_name,
+                    'member_nakshathram': pooja_nakshathram,
                     'quantity': quantity,
                     'unit_price': price_paise,
                     'total_price': total_price
@@ -679,7 +691,9 @@ def edit_bill(id):
                     'name': item.name,
                     'quantity': quantity,
                     'unit_price': unit_price,
-                    'total_price': total_price
+                    'total_price': total_price,
+                    'member_name': '',
+                    'member_nakshathram':''
                 })
         
         if not items_data:

@@ -1,6 +1,6 @@
 from email import errors
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, json, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from flask_wtf import form
 from app import db
@@ -8,6 +8,7 @@ from app.models import PoojaService, ServiceMaterial, InventoryItem, PoojaBookin
 from datetime import datetime, date, timedelta
 
 from app.routes.devotees import generate_devotee_id
+from app.utils.json_util import json_response
 
 bp = Blueprint('poojas', __name__, url_prefix='/poojas')
 
@@ -34,7 +35,8 @@ def services_list():
     category = request.args.get('category', '')
     search = (request.args.get('search', '') or '').strip()
     
-    query = PoojaService.query.filter_by(is_active=True)
+    # Show all services (both active and inactive) for grid management
+    query = PoojaService.query
     
     if category:
         query = query.filter_by(category=category)
@@ -42,17 +44,16 @@ def services_list():
         pattern = f'%{search}%'
         query = query.filter(PoojaService.english_name.ilike(pattern))
     
-    services = query.order_by(PoojaService.malayalam_name, PoojaService.name).all()
-    
-    categories = db.session.query(PoojaService.category).filter(
-        PoojaService.is_active == True
-    ).distinct().all()
+    services = query.order_by(PoojaService.id).all()
+    jsonServ = json_response(services)
+
+    categories = db.session.query(PoojaService.category).distinct().all()
     categories = [c[0] for c in categories if c[0]]
     
     return render_template('poojas/services_list.html', 
-                         services=services, 
-                         categories=categories,
-                         selected_category=category,
+                         services=json_response(services).get_json(),
+                         categories=json_response(categories).get_json(),
+                         selected_category=json_response(category).get_json(),
                          search=search)
 
 
@@ -120,6 +121,58 @@ def services_edit(id):
     
     in_use, usage_counts = _service_in_use(service.id)
     return render_template('poojas/services_edit.html', service=service, in_use=in_use, usage_counts=usage_counts)
+
+
+@bp.route('/services/update-batch', methods=['POST'])
+@login_required
+def services_update_batch():
+    """Batch update services from Ag-Grid"""
+    if current_user.role not in ['admin']:
+        return jsonify({'success': False, 'message': 'Only admins can update services'}), 403
+    
+    try:
+        data = request.get_json()
+        services_data = data.get('services', [])
+        modified_ids = data.get('modified_ids', [])
+        
+        for service_data in services_data:
+            service_id = service_data.get('id')
+            
+            # For new rows (id is None), create a new service
+            if service_id is None:
+                if service_data.get('english_name') or service_data.get('malayalam_name'):
+                    new_service = PoojaService(
+                        english_name=service_data.get('english_name', ''),
+                        malayalam_name=service_data.get('malayalam_name', ''),
+                        name=service_data.get('malayalam_name') or service_data.get('english_name'),
+                        category=service_data.get('category', ''),
+                        default_price=float(service_data.get('default_price', 0)),
+                        duration_minutes=int(service_data.get('duration_minutes', 30)),
+                        max_bookings_per_day=int(service_data.get('max_bookings_per_day', 10)),
+                        add_to_booking=service_data.get('add_to_booking', True),
+                        is_active=service_data.get('is_active', True)
+                    )
+                    db.session.add(new_service)
+            else:
+                # Update existing service
+                service = PoojaService.query.get(service_id)
+                if service and service_id in modified_ids:
+                    service.english_name = service_data.get('english_name', service.english_name)
+                    service.malayalam_name = service_data.get('malayalam_name', service.malayalam_name)
+                    service.name = service_data.get('malayalam_name') or service_data.get('english_name') or service.name
+                    service.category = service_data.get('category', service.category)
+                    service.default_price = float(service_data.get('default_price', service.default_price))
+                    service.duration_minutes = int(service_data.get('duration_minutes', service.duration_minutes))
+                    service.max_bookings_per_day = int(service_data.get('max_bookings_per_day', service.max_bookings_per_day))
+                    service.add_to_booking = service_data.get('add_to_booking', service.add_to_booking)
+                    service.is_active = service_data.get('is_active', service.is_active)
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Services updated successfully'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
 
 
 @bp.route('/services/<int:id>/disable', methods=['POST'], endpoint='services_disable')

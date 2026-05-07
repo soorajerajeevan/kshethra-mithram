@@ -1,11 +1,41 @@
 {% extends "base.html" %}
 {% block title %}Pooja Services{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/dist/styles/ag-grid.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/dist/styles/ag-theme-quartz.css">
+<style>
+    .ag-theme-quartz {
+        --ag-header-background-color: #373c5c;
+        --ag-header-foreground-color: white;
+        --ag-row-hover-color: #f0f0f0;
+        --ag-row-border-color: #e0e0e0;
+    }
+    #serviceGrid {
+        width: 100%;
+        height: 600px;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+    }
+    .action-buttons button {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+</style>
+{% endblock %}
 {% block content %}
 <div class="row mb-3">
     <div class="col-md-6"><h2><i class="bi bi-calendar-event"></i> Pooja Services</h2></div>
     <div class="col-md-6 text-end">
+        <button id="addNewRowBtn" class="btn btn-success me-2">
+            <i class="bi bi-plus"></i> Add New Row
+        </button>
+        <button id="updateChangesBtn" class="btn btn-primary me-2" disabled>
+            <i class="bi bi-check-circle"></i> Update Changes
+        </button>
         <a href="{{ url_for('poojas.services_add') }}" class="btn btn-primary">
-            <i class="bi bi-plus"></i> Add Service
+            <i class="bi bi-plus"></i> Add Service (Full Form)
         </a>
     </div>
 </div>
@@ -19,38 +49,195 @@
                 <button type="submit" class="btn btn-outline-primary">Search</button>
             </div>
         </form>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Malayalam Name</th>
-                    <th>English Name</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Duration</th>
-                    <th>Show In Booking</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for service in services %}
-                <tr>
-                    <td>{{ service.malayalam_name or service.name }}</td>
-                    <td>{{ service.english_name or '-' }}</td>
-                    <td><span class="badge bg-info">{{ service.category }}</span></td>
-                    <td>{{ service.default_price|currency }}</td>
-                    <td>{{ service.duration_minutes }} min</td>
-                    <td>
-                        <span class="badge bg-{{ 'success' if service.add_to_booking else 'secondary' }}">
-                            {{ 'Yes' if service.add_to_booking else 'No' }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="{{ url_for('poojas.services_edit', id=service.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div id="serviceGrid" class="ag-theme-quartz"></div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/dist/ag-grid-community.min.js"></script>
+<script>
+let gridApi;
+let gridColumnApi;
+let modifiedRows = new Set();
+
+const columnDefs = [
+    {
+        headerName: 'Number',
+        field: 'id',
+        editable: false,
+        flex: 0.5,
+        minWidth: 100,
+        cellDataType: 'number'
+    },
+    {
+        headerName: 'Malayalam Name',
+        field: 'malayalam_name',
+        editable: true,
+        flex: 1,
+        minWidth: 150,
+        cellDataType: 'text'
+    },
+    {
+        headerName: 'English Name',
+        field: 'english_name',
+        editable: true,
+        flex: 1,
+        minWidth: 150,
+        cellDataType: 'text'
+    },
+    {
+        headerName: 'Category',
+        field: 'category',
+        editable: true,
+        flex: 1,
+        minWidth: 120,
+        cellDataType: 'text'
+    },
+    {
+        headerName: 'Price (₹)',
+        field: 'default_price',
+        editable: true,
+        flex: 0.8,
+        minWidth: 100,
+        cellDataType: 'number',
+        valueFormatter: params => params.value ? params.value.toFixed(2) : '0.00'
+    },
+    {
+        headerName: 'Max Bookings/Day',
+        field: 'max_bookings_per_day',
+        editable: true,
+        flex: 0.9,
+        minWidth: 100,
+        cellDataType: 'number'
+    },
+    {
+        headerName: 'Show in Booking',
+        field: 'add_to_booking',
+        cellRenderer: 'agCheckboxCellRenderer',
+        cellEditor: 'agCheckboxCellEditor',
+        editable: true,
+        flex: 0.8,
+        minWidth: 100
+    },
+    {
+        headerName: 'Active',
+        field: 'is_active',
+        cellRenderer: 'agCheckboxCellRenderer',
+        cellEditor: 'agCheckboxCellEditor',
+        editable: true,
+        flex: 0.6,
+        minWidth: 80
+    },
+    {
+        headerName: 'Actions',
+        field: 'id',
+        width: 150,
+        sortable: false,
+        filter: false,
+        cellRenderer: function(params) {
+            const div = document.createElement('div');
+            div.className = 'action-buttons';
+            console.log("Param to render", params);
+            
+            const editBtn = document.createElement('a');
+            editBtn.href = '{{ url_for("poojas.services_edit", id="1") }}'.replace('__ID__', params.value);
+            editBtn.className = 'btn btn-sm btn-warning';
+            editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit';
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn btn-sm btn-danger';
+            deleteBtn.innerHTML = '<i class="bi bi-trash"></i> Delete';
+            deleteBtn.onclick = function(e) {
+                e.preventDefault();
+                if (confirm('Are you sure you want to delete this row?')) {
+                    gridApi.applyTransaction({ remove: [params.data] });
+                }
+            };
+            
+            div.appendChild(editBtn);
+            // div.appendChild(deleteBtn);
+            return div;
+        }
+    }
+];
+
+const gridOptions = {
+    columnDefs: columnDefs,
+    rowData: {{ services|tojson }},
+    defaultColDef: {
+        sortable: true,
+        filter: true,
+        resizable: true
+    },
+    rowSelection: 'multiple',
+    suppressRowClickSelection: false,
+    onCellValueChanged: function(params) {
+        if (params.data.id) {
+            modifiedRows.add(params.data.id);
+            document.getElementById('updateChangesBtn').disabled = modifiedRows.size === 0;
+        }
+    },
+    onRowDataUpdated: function() {
+        if (modifiedRows.size > 0) {
+            document.getElementById('updateChangesBtn').disabled = false;
+        }
+    }
+};
+
+// Initialize grid
+const eGridDiv = document.querySelector('#serviceGrid');
+gridApi = agGrid.createGrid(eGridDiv, gridOptions);
+
+// Add New Row button
+document.getElementById('addNewRowBtn').addEventListener('click', function() {
+    const newRow = {
+        id: null,
+        malayalam_name: '',
+        english_name: '',
+        category: '',
+        default_price: 0,
+        duration_minutes: 30,
+        max_bookings_per_day: 10,
+        add_to_booking: true,
+        is_active: true
+    };
+    gridApi.applyTransaction({ add: [newRow], addIndex: 0 });
+});
+
+// Update Changes button
+document.getElementById('updateChangesBtn').addEventListener('click', function() {
+    const allRows = [];
+    gridApi.forEachNode(node => {
+        allRows.push(node.data);
+    });
+    
+    const updateData = {
+        services: allRows,
+        modified_ids: Array.from(modifiedRows)
+    };
+    
+    fetch('{{ url_for("poojas.services_update_batch") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Changes saved successfully!');
+            modifiedRows.clear();
+            document.getElementById('updateChangesBtn').disabled = true;
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to save changes'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving changes: ' + error);
+    });
+});
+</script>
 {% endblock %}
