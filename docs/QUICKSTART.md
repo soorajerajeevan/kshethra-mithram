@@ -130,7 +130,7 @@ Install GTK runtime from: https://github.com/tschoonj/GTK-for-Windows-Runtime-En
 
 ### Reset Everything
 ```bash
-rm temple_dev.db
+rm database/temple_dev.db
 python run.py init_db
 python run.py seed_data
 ```

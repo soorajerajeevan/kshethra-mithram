@@ -16,12 +16,11 @@ services:
 
     volumes:
       - ./database:/database
-      - ./app/static/uploads:/app/app/static/uploads
 
     restart: unless-stopped
   
-  networks:
-    - proxy
+    networks:
+      - proxy
 
 
 networks:
