@@ -154,8 +154,9 @@ endblock %}
                                                 class="form-control form-control-sm" placeholder="0" step="1" min="0"
                                                 value="0"></td>
                                     </tr>
-                                    <tr class="table-active">
-                                        <td><strong>Grand Total:</strong></td>
+                                    
+                                    <tr class="table-active blockquote">
+                                        <td><strong>Amount To Pay:</strong></td>
                                         <td class="text-end">
                                             <h3 class="mb-0" id="grandTotalDisplay" style="color: #28a745;">Rs.0.00</h3>
                                         </td>
@@ -191,7 +192,7 @@ endblock %}
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Payment Reference (Optional)</label>
                                     <input type="text" name="payment_reference" class="form-control"
-                                        placeholder="UPI ID / Last 4 digits / DD No">
+                                        placeholder="UPI Mobile / Last 4 digits / Voucher no. etc.">
                                 </div>
 
                                 <div class="mb-3">
@@ -733,6 +734,10 @@ endblock %}
         document.getElementById('subtotalDisplay').textContent = `Rs.${subtotal.toFixed(2)}`;
         document.getElementById('discountDisplay').textContent = `-Rs.${discount.toFixed(2)}`;
         document.getElementById('grandTotalDisplay').textContent = `Rs.${grandTotal.toFixed(2)}`;
+    }
+
+    function updateCredit() {
+        alert('Credit amount updated. Please ensure to select "Credit" as payment mode if you are applying credit to this bill.');
     }
 
     document.getElementById('discountValue').addEventListener('input', calculateTotal);
