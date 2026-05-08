@@ -2,13 +2,11 @@
 {% block title %}Pooja List{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.0.0/dist/styles/ag-grid.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.0.0/dist/styles/ag-theme-quartz.css">
 <style>
     .ag-theme-quartz {
         --ag-foreground-color: #333;
         --ag-background-color: #fff;
-        --ag-header-background-color: #373c5c;
+        --ag-header-background-color: #f1a855;
         --ag-header-foreground-color: #fff;
         --ag-row-border-color: #e0e0e0;
     }
@@ -23,7 +21,7 @@
         padding: 20px;
         border-radius: 15px;
         margin-bottom: 20px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
     }
 
     .filter-row {
@@ -94,7 +92,9 @@
 
 {% block content %}
 <div class="row mb-3">
-    <div class="col-md-6"><h2><i class="bi bi-calendar-event"></i> Pooja List</h2></div>
+    <div class="col-md-6">
+        <h2><i class="bi bi-calendar-event"></i> Pooja List</h2>
+    </div>
     <div class="col-md-6 text-end">
         <a href="{{ url_for('billing.new_bill') }}" class="btn btn-primary">
             <i class="bi bi-plus"></i> New Bill
@@ -143,12 +143,22 @@
     <div class="card-body">
         <form method="GET" class="mb-3">
             <div class="input-group">
-                <input type="text" name="search" class="form-control" placeholder="Search by bill number or devotee" value="{{ search }}">
+                <input type="text" name="search" class="form-control" placeholder="Search by bill number or devotee"
+                    value="{{ search }}">
                 <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Search</button>
             </div>
         </form>
         <table class="table">
-            <thead><tr><th>Bill No</th><th>Date</th><th>Devotee</th><th>Amount</th><th>Payment</th><th>Action</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Bill No</th>
+                    <th>Date</th>
+                    <th>Devotee</th>
+                    <th>Amount</th>
+                    <th>Payment</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
             <tbody>
                 {% for bill in bills.items %}
                 <tr>
@@ -170,233 +180,253 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@35.2.1/dist/ag-grid-community.min.js"></script>
-
 <script>
-let gridApi, columnApi;
-let poojaServices = [];
+    let gridApi, columnApi;
+    let poojaServices = [];
 
-// Initialize AG Grid
-function initializeGrid() {
-    const gridDiv = document.getElementById('poojaGrid');
+    // Initialize AG Grid
+    function initializeGrid() {
+        const columnDefs = [
+                {
+                    headerName: 'Bill ID',
+                    field: 'billNumber',
+                    width: 140,
+                    pinned: 'left',
+                    spanRows: billSpanMatcher
+                },
+                {
+                    headerName: 'Devotee Name',
+                    field: 'devoteeName',
+                    width: 140,
+                    spanRows: billSpanMatcher,
+                    pinned: 'left'
+                },
+                {
+                    headerName: 'Bill Date',
+                    field: 'billDate',
+                    pinned: 'left',
+                    spanRows: billSpanMatcher,
+                    width: 130
+                },
+                {
+                    headerName: 'Member Name',
+                    field: 'memberName',
+                    width: 140,
+                    minWidth: 130
+                },
+                {
+                    headerName: 'Member Nakshathram',
+                    field: 'memberNakshathram',
+                    width: 160,
+                    minWidth: 130
+                },
+                {
+                    headerName: 'Pooja',
+                    field: 'poojaName',
+                    width: 180,
+                    minWidth: 130
+                },
+                {
+                    headerName: 'Scheduled Date',
+                    field: 'billDate',
+                    width: 140
+                },
+                {
+                    headerName: 'QTY',
+                    field: 'quantity',
+                    width: 50,
+                    type: 'numericColumn'
+                },
+                {
+                    headerName: 'Price',
+                    field: 'unitPrice',
+                    width: 100,
+                    type: 'numericColumn',
+                    valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : ''
+                },
+                {
+                    headerName: 'Total',
+                    field: 'totalPrice',
+                    width: 120,
+                    type: 'numericColumn',
+                    valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : ''
+                },
+                {
+                    headerName: 'Sub Total',
+                    field: 'subtotal',
+                    width: 120,
+                    type: 'numericColumn',
+                    valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : '',
+                    spanRows: billSpanMatcher
+                },
+                {
+                    headerName: 'Discount',
+                    field: 'discountAmount',
+                    width: 120,
+                    type: 'numericColumn',
+                    valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : '',
+                    spanRows: billSpanMatcher
+                },
+                {
+                    headerName: 'Donation',
+                    field: 'donationAmount',
+                    width: 120,
+                    type: 'numericColumn',
+                    valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : '',
+                    spanRows: billSpanMatcher
+                },
+                {
+                    headerName: 'Grant Total',
+                    field: 'grandTotal',
+                    width: 140,
+                    type: 'numericColumn',
+                    valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : '',
+                    spanRows: billSpanMatcher
+                },
+                {
+                    headerName: 'Payment Mode',
+                    field: 'paymentMode',
+                    width: 130,
+                    spanRows: billSpanMatcher
+                },
+                {
+                    headerName: 'Reference',
+                    field: 'paymentReference',
+                    width: 150,
+                    spanRows: billSpanMatcher
+                },
+                {
+                    headerName: 'Notes',
+                    field: 'notes',
+                    width: 200,
+                    tooltipField: 'notes',
+                    spanRows: billSpanMatcher
+                }
+            ];  
+        const gridDiv = document.getElementById('poojaGrid');
 
-    const gridOptions = {
-        columnDefs: [
-            {
-                headerName: 'Bill ID',
-                field: 'billNumber',
-                width: 140,
-                pinned: 'left',
-                spanRows: true                
+        const gridOptions = {
+            columnDefs: columnDefs,
+            rowData: [],
+            defaultColDef: {
+                flex: 1,
+                resizable: true,
+                sortable: true,
+                cellStyle: { display: 'flex', 'align-items': 'center' },
+                filter: true
             },
-            {
-                headerName: 'Devotee Name',
-                field: 'devoteeName',
-                width: 160,
-                spanRows: true,
-                pinned: 'left'
-            },
-            {
-                headerName: 'Bill Date',
-                field: 'billDate',
-                pinned: 'left',
-                width: 140
-            },
-            {
-                headerName: 'Member Name',
-                field: 'memberName',
-                width: 160
-            },
-            {
-                headerName: 'Member Nakshathram',
-                field: 'memberNakshathram',
-                width: 160
-            },
-            {
-                headerName: 'Pooja',
-                field: 'poojaName',
-                width: 180
-            },
-            {
-                headerName: 'Scheduled Date',
-                field: 'billDate',
-                width: 140
-            },
-            {
-                headerName: 'Quantity',
-                field: 'quantity',
-                width: 100,
-                type: 'numericColumn'
-            },
-            {
-                headerName: 'Price',
-                field: 'unitPrice',
-                width: 120,
-                type: 'numericColumn',
-                valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : ''
-            },
-            {
-                headerName: 'Total',
-                field: 'totalPrice',
-                width: 120,
-                type: 'numericColumn',
-                valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : ''
-            },
-            {
-                headerName: 'Sub Total',
-                field: 'subtotal',
-                width: 120,
-                type: 'numericColumn',
-                valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : '',
-                spanRows: true
-            },
-            {
-                headerName: 'Discount',
-                field: 'discountAmount',
-                width: 120,
-                type: 'numericColumn',
-                valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : '',
-                spanRows: true
-            },
-            {
-                headerName: 'Donation',
-                field: 'donationAmount',
-                width: 120,
-                type: 'numericColumn',
-                valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : '',
-                spanRows: true
-            },
-            {
-                headerName: 'Grant Total',
-                field: 'grandTotal',
-                width: 140,
-                type: 'numericColumn',
-                valueFormatter: params => params.value ? '₹' + params.value.toLocaleString('en-IN') : '',
-                spanRows: true
-            },
-            {
-                headerName: 'Payment Mode',
-                field: 'paymentMode',
-                width: 130,
-                spanRows: true
-            },
-            {
-                headerName: 'Reference',
-                field: 'paymentReference',
-                width: 150,
-                spanRows: true
-            },
-            {
-                headerName: 'Notes',
-                field: 'notes',
-                width: 200,
-                tooltipField: 'notes',
-                spanRows: true
-            }
-        ],
-        rowData: [],
-        defaultColDef: {
-            flex: 1,
-            resizable: true,
-            sortable: true,
-            cellStyle: { display: 'flex', 'align-items': 'center' },
-            filter: true
-        },        
-        enableCellSpan: true,
-        domLayout: 'normal',
-        pagination: false
-    };
+            enableCellSpan: true,
+            domLayout: 'normal',
+            pagination: false
+        };
 
-    gridApi = agGrid.createGrid(gridDiv, gridOptions);
-    // columnApi = gridApi.getColumnApi();
+        gridApi = agGrid.createGrid(gridDiv, gridOptions);
+        // columnApi = gridApi.getColumnApi();
 
-    // Load initial data
-    loadPoojaData();
-    loadPoojaServices();
-}
-
-// Load pooja services for filter dropdown
-function loadPoojaServices() {
-    fetch('/poojas/api/list')
-        .then(response => response.json())
-        .then(data => {
-            poojaServices = data;
-            const select = document.getElementById('filterPooja');
-            data.forEach(service => {
-                const option = document.createElement('option');
-                option.value = service.id;
-                option.textContent = service.display_name;
-                select.appendChild(option);
-            });
-        })
-        .catch(error => console.error('Error loading pooja services:', error));
-}
-
-// Load pooja data from API
-function loadPoojaData() {
-    const startDate = document.getElementById('filterStartDate').value;
-    const endDate = document.getElementById('filterEndDate').value;
-    const poojaId = document.getElementById('filterPooja').value;
-
-    let url = '/billing/api/pooja-list';
-    const params = new URLSearchParams();
-
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    if (poojaId) params.append('poojaServiceId', poojaId);
-
-    if (params.toString()) {
-        url += '?' + params.toString();
+        // Load initial data
+        loadPoojaData();
+        loadPoojaServices();
     }
-    let gridData = [];
-    fetch(url)
-        .then(response => response.json())
-        .then(bills => {
-            console.log('Loaded Pooja Data:', bills);
-            for (const bill of bills) {
-                bill.billDate = new Date(bill.billDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-                bill.items.forEach(item => {
-                    gridData.push({
-                        billNumber: bill.billNumber,
-                        devoteeName: bill.devoteeName,
-                        memberNakshathram: item.memberNakshathram,
-                        memberName: item.memberName,
-                        billDate: bill.billDate,
-                        poojaName: item.service.name,
-                        quantity: item.quantity,
-                        unitPrice: item.unitPrice,
-                        totalPrice: item.totalPrice,
-                        subtotal: bill.subtotal,
-                        discountAmount: bill.discountAmount,
-                        donationAmount: bill.donationAmount,
-                        grandTotal: bill.grandTotal,
-                        paymentMode: bill.paymentMode,
-                        paymentReference: bill.paymentReference,
-                        notes: bill.notes,
-                        rowSpan: bill.items.length
-                    });
+
+    // Load pooja services for filter dropdown
+    function loadPoojaServices() {
+        fetch('/poojas/api/list')
+            .then(response => response.json())
+            .then(data => {
+                poojaServices = data;
+                const select = document.getElementById('filterPooja');
+                data.forEach(service => {
+                    const option = document.createElement('option');
+                    option.value = service.id;
+                    option.textContent = service.display_name;
+                    select.appendChild(option);
                 });
-            }
-            console.log('Transformed Grid Data:', gridData);
-            gridApi.setGridOption('rowData', gridData);
-        })
-        .catch(error => console.error('Error loading pooja data:', error));
-}
+            })
+            .catch(error => console.error('Error loading pooja services:', error));
+    }
 
-// Apply filters
-function applyFilters() {
-    loadPoojaData();
-}
+    // Load pooja data from API
+    function loadPoojaData() {
+        const startDate = document.getElementById('filterStartDate').value;
+        const endDate = document.getElementById('filterEndDate').value;
+        const poojaId = document.getElementById('filterPooja').value;
 
-// Reset filters
-function resetFilters() {
-    document.getElementById('filterStartDate').value = '';
-    document.getElementById('filterEndDate').value = '';
-    document.getElementById('filterPooja').value = '';
-    loadPoojaData();
-}
+        let url = '/billing/api/pooja-list';
+        const params = new URLSearchParams();
 
-// Initialize grid when DOM is ready
-document.addEventListener('DOMContentLoaded', initializeGrid);
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        if (poojaId) params.append('poojaServiceId', poojaId);
+
+        if (params.toString()) {
+            url += '?' + params.toString();
+        }
+        let gridData = [];
+        fetch(url)
+            .then(response => response.json())
+            .then(bills => {
+                console.log('Loaded Pooja Data:', bills);
+                for (const bill of bills) {
+                    bill.billDate = new Date(bill.billDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                    bill.items.forEach(item => {
+                        gridData.push({
+                            billNumber: bill.billNumber,
+                            devoteeName: bill.devoteeName,
+                            memberNakshathram: item.memberNakshathram,
+                            memberName: item.memberName,
+                            billDate: bill.billDate,
+                            poojaName: item.service.name,
+                            quantity: item.quantity,
+                            unitPrice: item.unitPrice,
+                            totalPrice: item.totalPrice,
+                            subtotal: bill.subtotal,
+                            discountAmount: bill.discountAmount,
+                            donationAmount: bill.donationAmount,
+                            grandTotal: bill.grandTotal,
+                            paymentMode: bill.paymentMode,
+                            paymentReference: bill.paymentReference,
+                            notes: bill.notes,
+                            rowSpan: bill.items.length
+                        });
+                    });
+                }
+                console.log('Transformed Grid Data:', gridData);
+                gridApi.setGridOption('rowData', gridData);
+            })
+            .catch(error => console.error('Error loading pooja data:', error));
+    }
+
+    // Apply filters
+    function applyFilters() {
+        loadPoojaData();
+    }
+
+    // Reset filters
+    function resetFilters() {
+        document.getElementById('filterStartDate').value = '';
+        document.getElementById('filterEndDate').value = '';
+        document.getElementById('filterPooja').value = '';
+        loadPoojaData();
+    }
+
+    function billSpanMatcher(params) {
+        const rowA = params.nodeA?.data ? params.nodeA.data : null;
+        const rowB = params.nodeB?.data ? params.nodeB.data : null;
+
+        // Safety checks
+        if (!rowA || !rowB) {
+            return false;
+        }
+
+        // Prevent spanning empty bill IDs
+        if (!rowA.billNumber || !rowB.billNumber) {
+            return false;
+        }
+        // Merge only same bill
+        return rowA.billNumber === rowB.billNumber;
+    }
+
+    // Initialize grid when DOM is ready
+    document.addEventListener('DOMContentLoaded', initializeGrid);
 </script>
 {% endblock %}
