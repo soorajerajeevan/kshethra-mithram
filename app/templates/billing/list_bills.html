@@ -193,6 +193,7 @@ function initializeGrid() {
                 headerName: 'Devotee Name',
                 field: 'devoteeName',
                 width: 160,
+                spanRows: true,
                 pinned: 'left'
             },
             {
@@ -298,6 +299,7 @@ function initializeGrid() {
             flex: 1,
             resizable: true,
             sortable: true,
+            cellStyle: { display: 'flex', 'align-items': 'center' },
             filter: true
         },        
         enableCellSpan: true,
