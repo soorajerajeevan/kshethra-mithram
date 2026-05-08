@@ -8,6 +8,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'app/static/dist'),
     filename: '[name].js',
+    publicPath: '/static/dist/',
   },
   module: {
     rules: [
@@ -15,19 +16,20 @@ module.exports = {
         test: /\.css$/,
         use: [
           MiniCssExtractPlugin.loader,
-          'css-loader',
-        ],
-      },
-      {
-        test: /\.(woff|woff2|eot|ttf|otf)$/,
-        use: [
           {
-            loader: 'file-loader',
+            loader: 'css-loader',
             options: {
-              name: 'fonts/[name].[ext]',
+              url: true,
             },
           },
         ],
+      },
+      {
+        test: /\.(woff|woff2|eot|ttf|otf|svg)$/i,
+        type: 'asset/resource',
+        generator: {
+          filename: 'fonts/[name][ext]',
+        },
       },
     ],
   },
