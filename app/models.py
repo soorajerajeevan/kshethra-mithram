@@ -276,6 +276,8 @@ class BillItem(db.Model):
     item_type = db.Column(db.String(20), nullable=False)  # POOJA, RETAIL
     item_id = db.Column(db.Integer)  # PoojaService.id or InventoryItem.id
     item_name = db.Column(db.String(200), nullable=False)
+    member_name = db.Column(db.String(150)) 
+    member_nakshathram = db.Column(db.String(50))
     quantity = db.Column(db.Float, default=1.0, nullable=False)
     unit_price = db.Column(db.Integer, nullable=False)  # in Rupee
     total_price = db.Column(db.Integer, nullable=False)  # in Rupee
@@ -287,6 +289,8 @@ class BillItem(db.Model):
             "item_type": self.item_type,
             "item_id": self.item_id,
             "item_name": self.item_name,
+            "member_name": self.member_name,
+            "member_nakshathram": self.member_nakshathram,
             "quantity": self.quantity,
             "unit_price": self.unit_price,
             "total_price": self.total_price

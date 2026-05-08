@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ _('Temple Management System') }}{% endblock %}</title>
     
-    <!-- Bootstrap 5 CSS (Local) -->
-    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-    
-    <!-- Bootstrap Icons (Local) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <!-- Bundled CSS (NPM packages) -->
+    <link href="{{ url_for('static', filename='dist/app.css') }}" rel="stylesheet">
     
     <!-- Custom CSS -->
     <style>
@@ -259,11 +256,8 @@
         </div>
     </footer>
     
-    <!-- Bootstrap Bundle with Popper (Local) -->
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-    
-    <!-- jQuery (Local) -->
-    <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
+    <!-- Bundled JavaScript (NPM packages) -->
+    <script src="{{ url_for('static', filename='dist/app.js') }}"></script>
     
     {% block extra_js %}{% endblock %}
 </body>

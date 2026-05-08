@@ -1,0 +1,32 @@
+{
+  "name": "kshethra-mithram",
+  "version": "1.0.0",
+  "description": "Temple Management System - Frontend Assets",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --mode=production",
+    "dev": "webpack --mode=development --watch",
+    "clean": "rm -rf app/static/dist"
+  },
+  "keywords": [
+    "temple",
+    "management",
+    "system"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^5.3.0",
+    "bootstrap-icons": "^1.11.0",
+    "jquery": "^3.6.0",
+    "tom-select": "^2.2.2"
+  },
+  "devDependencies": {
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.4",
+    "style-loader": "^3.3.3",
+    "css-loader": "^6.8.1",
+    "mini-css-extract-plugin": "^2.7.6",
+    "file-loader": "^6.2.0"
+  }
+}

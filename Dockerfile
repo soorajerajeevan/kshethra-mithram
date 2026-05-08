@@ -1,3 +1,15 @@
+# Stage 1: Build frontend assets with Node.js
+FROM node:18-alpine AS frontend-builder
+
+WORKDIR /build
+
+COPY package*.json ./
+COPY webpack.config.js ./
+COPY assets ./assets
+
+RUN npm install && npm run build
+
+# Stage 2: Python runtime
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -18,6 +30,9 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
+
+# Copy built frontend assets from builder stage
+COPY --from=frontend-builder /build/app/static/dist ./app/static/dist
 
 RUN mkdir -p /database /app/app/static/uploads /app/logs
 

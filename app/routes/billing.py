@@ -437,6 +437,8 @@ def new_bill():
                 item_type=item_data['type'],
                 item_id=item_data['service_id'],
                 item_name=item_data['name'],
+                member_name=item_data['member_name'],
+                member_nakshathram=item_data['member_nakshathram'],
                 quantity=item_data['quantity'],
                 unit_price=item_data['unit_price'],
                 total_price=item_data['total_price']
@@ -937,9 +939,9 @@ def list_bills():
     """List all bills"""
     page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '')
-    
+
     query = Bill.query.filter_by(is_active=True)
-    
+
     if search:
         search_pattern = f'%{search}%'
         query = query.join(Devotee).filter(
@@ -949,9 +951,91 @@ def list_bills():
                 Devotee.phone.ilike(search_pattern)
             )
         )
-    
+
     bills = query.order_by(Bill.bill_date.desc()).paginate(
         page=page, per_page=20, error_out=False
     )
-    
+
     return render_template('billing/list_bills.html', bills=bills, search=search)
+
+@bp.route('/api/pooja-list')
+@login_required
+def api_pooja_list():
+
+    start_date = request.args.get('startDate')
+    end_date = request.args.get('endDate')
+    pooja_service_id = request.args.get('poojaServiceId')
+
+    query = Bill.query.filter(
+        Bill.is_active == True
+    )
+
+    # Date filters
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, '%Y-%m-%d')
+            query = query.filter(Bill.bill_date >= start)
+        except:
+            pass
+
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, '%Y-%m-%d')
+            end = datetime.combine(end.date(), datetime.max.time())
+            query = query.filter(Bill.bill_date <= end)
+        except:
+            pass
+
+    bills = query.order_by(Bill.bill_date.desc()).all()
+
+    data = []
+
+    for bill in bills:
+
+        items = []
+
+        for item in bill.items:
+
+            if item.item_type != 'POOJA':
+                continue
+
+            service = PoojaService.query.get(item.item_id)
+
+            if pooja_service_id and str(service.id) != pooja_service_id:
+                continue
+
+            items.append({
+                "itemId": item.id,
+                "itemName": item.item_name,
+                "memberName": item.member_name,
+                "memberNakshathram": item.member_nakshathram,
+                "quantity": float(item.quantity),
+                "unitPrice": int(item.unit_price),
+                "totalPrice": int(item.total_price),
+
+                "service": {
+                    "id": service.id,
+                    "name": service.display_name,
+                    "rate": int(service.default_price)
+                }
+            })
+
+        if not items:
+            continue
+
+        data.append({
+            "billId": bill.id,
+            "billNumber": bill.bill_number,
+            "billDate": bill.bill_date.strftime('%Y-%m-%d') if bill.bill_date else '',
+            "devoteeName": bill.devotee.full_name if bill.devotee else '',
+            "subtotal": int(bill.subtotal),
+            "discountAmount": int(bill.discount_amount),
+            "donationAmount": int(bill.donation_amount),
+            "grandTotal": int(bill.grand_total),
+            "paymentMode": bill.payment_mode,
+            "paymentReference": bill.payment_reference,
+            "notes": bill.notes,
+            "items": items
+        })
+
+    return jsonify(data)

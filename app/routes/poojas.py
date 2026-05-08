@@ -454,20 +454,20 @@ def calendar():
     # Get current month or specified month
     year = request.args.get('year', datetime.now().year, type=int)
     month = request.args.get('month', datetime.now().month, type=int)
-    
+
     # Get all bookings for this month
     start_date = date(year, month, 1)
     if month == 12:
         end_date = date(year + 1, 1, 1)
     else:
         end_date = date(year, month + 1, 1)
-    
+
     bookings = PoojaBooking.query.filter(
         PoojaBooking.scheduled_date >= start_date,
         PoojaBooking.scheduled_date < end_date,
         PoojaBooking.is_active == True
     ).order_by(PoojaBooking.scheduled_date).all()
-    
+
     # Group bookings by date
     bookings_by_date = {}
     for booking in bookings:
@@ -475,8 +475,24 @@ def calendar():
         if date_key not in bookings_by_date:
             bookings_by_date[date_key] = []
         bookings_by_date[date_key].append(booking)
-    
+
     return render_template('poojas/calendar.html',
                          year=year,
                          month=month,
                          bookings_by_date=bookings_by_date)
+
+
+@bp.route('/api/list')
+@login_required
+def api_services_list():
+    """API endpoint to get all active pooja services"""
+    services = PoojaService.query.filter_by(is_active=True).order_by(PoojaService.malayalam_name, PoojaService.name).all()
+    return jsonify([{
+        'id': s.id,
+        'name': s.name,
+        'english_name': s.english_name,
+        'malayalam_name': s.malayalam_name,
+        'display_name': s.display_name,
+        'default_price': s.default_price,
+        'category': s.category
+    } for s in services])
