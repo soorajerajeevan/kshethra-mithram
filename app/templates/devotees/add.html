@@ -14,7 +14,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label>Nakshatra</label>
-                            <input type="text" name="nakshatra" class="form-control">
+                            <input type="text" name="nakshatra" id="devoteeNakshathram" class="form-control">
                         </div>
                     </div>
                     <div class="row">
@@ -39,7 +39,8 @@
                     </div>
                     <div class="mb-3">
                         <label>Family Members</label>
-                        <textarea name="family_members" class="form-control" rows="4" placeholder="One per line. Use: Name | Nakshathram"></textarea>
+                        <textarea name="family_members" class="form-control" rows="4"
+                            placeholder="One per line. Use: Name | Nakshathram"></textarea>
                         <small class="text-muted">Example: Sulochana | 12 ഉത്രം</small>
                     </div>
                     <button type="submit" class="btn btn-primary">Add Devotee</button>
@@ -49,4 +50,51 @@
         </div>
     </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    var nakshathrams = []
+
+
+    function initSearchableSelect(selector, options = {}) {
+        const el = document.querySelector(selector);
+        if (!el || typeof TomSelect === 'undefined') return null;
+        if (el.tomselect) return el.tomselect;
+        return new TomSelect(el, {
+            maxOptions: 50,
+            maxItems: 1,
+            closeAfterSelect: true,
+            ...options
+        });
+    }
+    // Once DOM loaded, initialize the nakshatra select with options from the server
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log("Fetching nakshatras from server...");
+        fetch('/devotees/nakshatra')
+            .then(response => response.json())
+            .then(data => {
+                nakshathrams = data.map(n => ({
+                    id: n.malayalam_name,
+                    english_name: n.english_name,
+                    malayalam_name: n.malayalam_name,
+                    display_name: `${n.id} - ${n.malayalam_name}`
+                }));
+                console.log("Fetched nakshatras from server:", nakshathrams);
+
+                const nakshTs = initSearchableSelect('#devoteeNakshathram', {
+                    
+                    valueField: 'malayalam_name',
+                    labelField: 'display_name',
+                    searchField: ['english_name', 'id', 'malayalam_name'],
+                    options: nakshathrams,
+                    placeholder: 'Nakshathram',
+                    create: false
+                });
+            })
+            .catch(error => console.error('Error fetching nakshatras:', error));
+    });
+
+
+</script>
+
 {% endblock %}

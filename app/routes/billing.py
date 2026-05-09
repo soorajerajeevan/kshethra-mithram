@@ -12,33 +12,33 @@ import io
 bp = Blueprint('billing', __name__, url_prefix='/billing')
 
 MALAYALAM_NAKSHATHRAS = [
-    "01 അശ്വതി",
-    "02 ഭരണി",
-    "03 കാർത്തിക",
-    "04 രോഹിണി",
-    "05 മകയിരം",
-    "06 തിരുവാതിര",
-    "07 പുണർതം",
-    "08 പൂയം",
-    "09 ആയില്യം",
-    "10 മകം",
-    "11 പൂരം",
-    "12 ഉത്രം",
-    "13 അത്തം",
-    "14 ചിത്തിര",
-    "15 ചോതി",
-    "16 വിശാഖം",
-    "17 അനിഴം",
-    "18 തൃക്കേട്ട",
-    "19 മൂലം",
-    "20 പൂരാടം",
-    "21 ഉത്രാടം",
-    "22 തിരുവോണം",
-    "23 അവിട്ടം",
-    "24 ചതയം",
-    "25 പൂരുരുട്ടാതി",
-    "26 ഉത്രട്ടാതി",
-    "27 രേവതി",
+    {"id": "01", "malayalam_name": "അശ്വതി", "english_name": "Ashwathi"},
+    {"id": "02", "malayalam_name": "ഭരണി", "english_name": "Bharani"},
+    {"id": "03", "malayalam_name": "കാർത്തിക", "english_name": "Karthika"},
+    {"id": "04", "malayalam_name": "രോഹിണി", "english_name": "Rohini"},
+    {"id": "05", "malayalam_name": "മകയിരം", "english_name": "Makayiram"},
+    {"id": "06", "malayalam_name": "തിരുവാതിര", "english_name": "Thiruvathira"},
+    {"id": "07", "malayalam_name": "പുണർതം", "english_name": "Punartham"},
+    {"id": "08", "malayalam_name": "പൂയം", "english_name": "Pooyam"},
+    {"id": "09", "malayalam_name": "ആയില്യം", "english_name": "Aayilyam"},
+    {"id": "10", "malayalam_name": "മകം", "english_name": "Makam"},
+    {"id": "11", "malayalam_name": "പൂരം", "english_name": "Pooram"},
+    {"id": "12", "malayalam_name": "ഉത്രം", "english_name": "Uthram"},
+    {"id": "13", "malayalam_name": "അത്തം", "english_name": "Atham"},
+    {"id": "14", "malayalam_name": "ചിത്തിര", "english_name": "Chithira"},
+    {"id": "15", "malayalam_name": "ചോതി", "english_name": "Chothi"},
+    {"id": "16", "malayalam_name": "വിശാഖം", "english_name": "Visakham"},
+    {"id": "17", "malayalam_name": "അനിഴം", "english_name": "Anizham"},
+    {"id": "18", "malayalam_name": "തൃക്കേട്ട", "english_name": "Thrikketta"},
+    {"id": "19", "malayalam_name": "മൂലം", "english_name": "Moolam"},
+    {"id": "20", "malayalam_name": "പൂരാടം", "english_name": "Puramadam"},
+    {"id": "21", "malayalam_name": "ഉത്രാടം", "english_name": "Uthradam"},
+    {"id": "22", "malayalam_name": "തിരുവോണം", "english_name": "Thiruvonam"},
+    {"id": "23", "malayalam_name": "അവിട്ടം", "english_name": "Avittam"},
+    {"id": "24", "malayalam_name": "ചതയം", "english_name": "Chathayam"},
+    {"id": "25", "malayalam_name": "പൂരുരുട്ടാതി", "english_name": "Pooruruttathi"},
+    {"id": "26", "malayalam_name": "ഉത്രട്ടാതി", "english_name": "Uthratathi"},
+    {"id": "27", "malayalam_name": "രേവതി", "english_name": "Revathi"},
 ]
 
 
@@ -70,55 +70,30 @@ def generate_devotee_id():
     return f'DEV-{new_num:05d}'
 
 
-def parse_family_members(raw_value):
-    """Return list[{'name': str, 'nakshathram': str}] from legacy or JSON formats."""
-    if not raw_value:
-        return []
-
-    parsed = []
-    text = (raw_value or '').strip()
-    if not text:
-        return []
-
-    # Preferred format: JSON array of objects.
-    try:
-        data = json.loads(text)
-        if isinstance(data, list):
-            for item in data:
-                if isinstance(item, dict):
-                    name = (item.get('name') or '').strip()
-                    nak = (item.get('nakshathram') or '').strip()
-                    if name:
-                        parsed.append({'name': name, 'nakshathram': nak})
-            if parsed:
-                return parsed
-    except Exception:
-        pass
-
-    # Legacy fallback: comma-separated names.
-    for name in [x.strip() for x in text.split(',') if x.strip()]:
-        parsed.append({'name': name, 'nakshathram': ''})
-    return parsed
+def parse_family_members(family_string):
+    """Return list[name::nakshathram] from text formats."""
+    members = []
+    if family_string:
+        for member in family_string.split(';'):
+            if '::' in member:
+                name, nakshathram = member.split('::')
+                members.append({
+                    "name": name.strip(),
+                    "nakshathram": nakshathram.strip()
+                })
+    return members
 
 
-def dump_family_members(items):
-    cleaned = []
-    seen = set()
-    for item in items:
-        name = (item.get('name') or '').strip()
-        nak = (item.get('nakshathram') or '').strip()
-        if not name:
-            continue
-        key = name.lower()
-        if key in seen:
-            # Keep the first entry; if no nak there, fill from later row.
-            for existing in cleaned:
-                if existing['name'].lower() == key and not existing.get('nakshathram') and nak:
-                    existing['nakshathram'] = nak
-            continue
-        seen.add(key)
-        cleaned.append({'name': name, 'nakshathram': nak})
-    return json.dumps(cleaned, ensure_ascii=False)
+def update_family_members(members_list):
+    """
+    Convert list of objects back to string format
+    Input: [{"name": "sooraj", "nakshathram": "uthram"}, ...]
+    Output: "sooraj::uthram;sandeep::makam;Geethu::thrikketta"
+    """
+    return ';'.join([
+        f"{member['name']}::{member['nakshathram']}" 
+        for member in members_list
+    ])
 
 
 def _safe_float(value, default=0.0):
@@ -319,19 +294,15 @@ def new_bill():
                 if pooja_devotee_name:
                     key = pooja_devotee_name.lower()
                     if key not in family_member_map:
-                        family_member_map[key] = {
-                            'name': pooja_devotee_name,
-                            'nakshathram': pooja_nakshathram
-                        }
-                    elif not family_member_map[key].get('nakshathram') and pooja_nakshathram:
-                        family_member_map[key]['nakshathram'] = pooja_nakshathram
+                        family_member_map[key] = pooja_devotee_name + '::' + pooja_nakshathram
+                        
                 custom_price = request.form.get(f'pooja_price_{i}')
                 price_paise = int(_safe_float(custom_price)) if custom_price else service.default_price
                 total_price = int(price_paise * quantity)
 
                 item_name_parts = [service.display_name]
                 if pooja_devotee_name:
-                    item_name_parts.append(f'for {pooja_devotee_name}')
+                    item_name_parts.append(f' - {pooja_devotee_name}')
                 if pooja_nakshathram:
                     item_name_parts.append(f'({pooja_nakshathram})')
                 item_name = ' '.join(item_name_parts)
@@ -420,15 +391,7 @@ def new_bill():
 
         # Save pooja devotee names as family members for this devotee.
         if devotee:
-            existing = parse_family_members(devotee.family_members)
-            existing_map = {(x['name'] or '').strip().lower(): x for x in existing if (x.get('name') or '').strip()}
-            for key, value in family_member_map.items():
-                if key in existing_map:
-                    if value.get('nakshathram'):
-                        existing_map[key]['nakshathram'] = value['nakshathram']
-                else:
-                    existing_map[key] = {'name': value['name'], 'nakshathram': value.get('nakshathram', '')}
-            devotee.family_members = dump_family_members(list(existing_map.values()))
+            devotee.family_members = ';'.join(f"{name}::{nakshathram}" for name, nakshathram in family_member_map.items())
 
         # Add bill items
         for item_data in items_data:
@@ -496,24 +459,71 @@ def new_bill():
 
         flash(f'Bill {bill.bill_number} created successfully!', 'success')
         return redirect(url_for('billing.view_bill', id=bill.id))
-    
-    # GET request - show billing form
-    devotees = Devotee.query.filter_by(is_active=True).order_by(Devotee.full_name).all()
-    poojas = PoojaService.query.filter_by(is_active=True).order_by(PoojaService.malayalam_name, PoojaService.name).all()
-    retail_items = InventoryItem.query.filter_by(is_active=True).order_by(InventoryItem.name).all()
+    else:         
+        # GET request - show billing form
+        devotees = Devotee.query.filter_by(is_active=True).order_by(Devotee.full_name).all()
+        poojas = PoojaService.query.filter_by(is_active=True).order_by(PoojaService.id).all()
+        retail_items = InventoryItem.query.filter_by(is_active=True).order_by(InventoryItem.name).all()
 
-    # Build JSON-serializable copies for use in the template's <script> block.
+        # Build JSON-serializable copies for use in the template's <script> block.
+        poojas_json = [
+            {
+                'id': p.id,
+                'english_name': p.english_name or '',
+                'malayalam_name': p.malayalam_name,
+                'default_price': int(p.default_price or 0),
+            }
+            for p in poojas
+        ]
+        retail_items_json = [
+            {
+                'id': r.id,
+                'name': r.name,
+                'selling_price': int(r.selling_price or 0),
+                'current_stock': float(r.current_stock or 0),
+            }
+            for r in retail_items
+        ]
+        devotees_json = [
+            {
+                'id': d.id,
+                'devotee_id': d.devotee_id,
+                'full_name': d.full_name,
+                'phone': d.phone or '',
+                'nakshatra': d.nakshatra or '',
+                'family_members': d.family_members or '',
+            }
+            for d in devotees
+        ]
+        
+        submission_token = str(uuid.uuid4())
+        session['new_bill_submission_token'] = submission_token
+
+        return render_template('billing/new_bill.html',
+                            submission_token=submission_token)
+
+
+@bp.route('/api/billing-form-data')
+@login_required
+def billing_form_data():
+
+    # GET request - render form with existing bill data
+    devotees = Devotee.query.filter_by(is_active=True).order_by(Devotee.full_name).all()
+    poojas = PoojaService.query.filter_by(is_active=True).order_by(PoojaService.id).all()
+    retail_items = InventoryItem.query.filter_by(is_active=True).order_by(InventoryItem.name).all()        
+
     poojas_json = [
         {
             'id': p.id,
-            'name': p.display_name,
+            'name': str(p.id) + ' - ' + (p.malayalam_name if p.malayalam_name else p.english_name),
             'english_name': p.english_name or '',
-            'malayalam_name': p.malayalam_name or p.name,
+            'malayalam_name': p.malayalam_name,
             'default_price': int(p.default_price or 0),
-            'add_to_booking': p.add_to_booking if hasattr(p, 'add_to_booking') else False
+            'add_to_booking': getattr(p,'add_to_booking',False)
         }
         for p in poojas
     ]
+
     retail_items_json = [
         {
             'id': r.id,
@@ -523,44 +533,28 @@ def new_bill():
         }
         for r in retail_items
     ]
+
     devotees_json = [
         {
             'id': d.id,
             'devotee_id': d.devotee_id,
             'full_name': d.full_name,
+            'family_name': d.gotra or '',
+            "address": d.address or '',
             'phone': d.phone or '',
             'nakshatra': d.nakshatra or '',
-            'family_members': parse_family_members(d.family_members),
+            'family_members': d.family_members or '',
         }
         for d in devotees
     ]
-    nakshathram_values = set(MALAYALAM_NAKSHATHRAS)
-    for d in devotees:
-        if (d.nakshatra or '').strip():
-            nakshathram_values.add(d.nakshatra.strip())
-        for fm in parse_family_members(d.family_members):
-            if (fm.get('nakshathram') or '').strip():
-                nakshathram_values.add(fm['nakshathram'].strip())
+    
+    return jsonify({
+        'poojas': poojas_json,
+        'retailItems': retail_items_json,
+        'devotees': devotees_json,
+        'nakshathrams': MALAYALAM_NAKSHATHRAS
+    })
 
-    def _naksh_sort_key(value):
-        m = re.match(r'^\s*(\d+)', value or '')
-        if m:
-            return (0, int(m.group(1)), value)
-        return (1, 999, value or '')
-
-    nakshathrams_json = sorted(nakshathram_values, key=_naksh_sort_key)
-    submission_token = str(uuid.uuid4())
-    session['new_bill_submission_token'] = submission_token
-
-    return render_template('billing/new_bill.html',
-                         devotees=devotees,
-                         poojas=poojas,
-                         retail_items=retail_items,
-                         poojas_json=poojas_json,
-                         retail_items_json=retail_items_json,
-                         devotees_json=devotees_json,
-                         nakshathrams_json=nakshathrams_json,
-                         submission_token=submission_token)
 
 
 @bp.route('/create-from-booking/<int:booking_id>')
@@ -617,197 +611,6 @@ def view_bill(id):
     is_paid = bill.payment_mode == 'Credit' and bill.grand_total - bill.amount_paid == 0
     return render_template('billing/view_bill.html', bill=bill, is_paid=is_paid)
 
-
-@bp.route('/<int:id>/edit', methods=['GET', 'POST'])
-@login_required
-def edit_bill(id):
-    """Edit a bill's master details and line items (uses same form as new_bill)"""
-    bill = Bill.query.get_or_404(id)
-
-    if request.method == 'POST':
-        devotee_id_raw = (request.form.get('devotee_id') or '').strip()
-        if not devotee_id_raw.isdigit():
-            flash('Please select a valid devotee', 'warning')
-            return redirect(url_for('billing.edit_bill', id=id))
-        devotee = Devotee.query.get(int(devotee_id_raw))
-        if not devotee:
-            flash('Selected devotee not found', 'warning')
-            return redirect(url_for('billing.edit_bill', id=id))
-
-        bill.payment_mode = request.form.get('payment_mode')
-        bill.payment_reference = request.form.get('payment_reference')
-        bill.notes = request.form.get('notes')
-
-        # Update bill items from form data
-        items_data = []
-        
-        # Get all pooja items
-        pooja_count = int(request.form.get('pooja_count', 0))
-        for i in range(pooja_count):
-            service_id = request.form.get(f'pooja_service_{i}')
-            if service_id:
-                service = PoojaService.query.get(int(service_id))
-                if not service:
-                    continue
-                pooja_devotee_name = (request.form.get(f'pooja_devotee_name_{i}') or '').strip()
-                pooja_nakshathram = (request.form.get(f'pooja_nakshathram_{i}') or '').strip()
-                quantity = max(float(request.form.get(f'pooja_quantity_{i}', 1) or 1), 1)
-                custom_price = request.form.get(f'pooja_price_{i}')
-                price_paise = int(float(custom_price)) if custom_price else service.default_price
-                total_price = int(price_paise * quantity)
-
-                item_name_parts = [service.display_name]
-                if pooja_devotee_name:
-                    item_name_parts.append(f'for {pooja_devotee_name}')
-                if pooja_nakshathram:
-                    item_name_parts.append(f'({pooja_nakshathram})')
-                item_name = ' '.join(item_name_parts)
-                
-                items_data.append({
-                    'type': 'POOJA',
-                    'id': service.id,
-                    'name': item_name,
-                    'member_name': pooja_devotee_name,
-                    'member_nakshathram': pooja_nakshathram,
-                    'quantity': quantity,
-                    'unit_price': price_paise,
-                    'total_price': total_price
-                })
-        
-        # Get all retail items
-        retail_count = int(request.form.get('retail_count', 0))
-        for i in range(retail_count):
-            item_id = request.form.get(f'retail_item_{i}')
-            if item_id:
-                item = InventoryItem.query.get(int(item_id))
-                if not item:
-                    continue
-                quantity = float(request.form.get(f'retail_quantity_{i}', 1))
-                custom_price = request.form.get(f'retail_price_{i}')
-                unit_price = int(float(custom_price)) if custom_price else item.selling_price
-                total_price = int(unit_price * quantity)
-                
-                items_data.append({
-                    'type': 'RETAIL',
-                    'id': item.id,
-                    'name': item.name,
-                    'quantity': quantity,
-                    'unit_price': unit_price,
-                    'total_price': total_price,
-                    'member_name': '',
-                    'member_nakshathram':''
-                })
-        
-        if not items_data:
-            flash('Please add at least one item to the bill', 'warning')
-            return redirect(url_for('billing.edit_bill', id=id))
-        
-        # Delete old items
-        BillItem.query.filter_by(bill_id=bill.id).delete()
-        
-        # Calculate totals
-        subtotal = sum(item['total_price'] for item in items_data)
-        
-        # Parse discount
-        discount_type = request.form.get('discount_type', 'amount')
-        discount_value = float(request.form.get('discount_value', 0) or 0)
-        
-        if discount_type == 'percent':
-            discount_amount = int(subtotal * discount_value )
-            discount_percent = discount_value
-        else:
-            discount_amount = int(discount_value)
-            discount_percent = (discount_amount / subtotal) if subtotal > 0 else 0
-        
-        # Parse donation
-        donation_rupees = float(request.form.get('donation', 0) or 0)
-        donation_paise = int(donation_rupees)
-        
-        bill.subtotal = subtotal
-        bill.discount_amount = discount_amount
-        bill.discount_percent = discount_percent
-        bill.donation_amount = donation_paise
-        bill.grand_total = subtotal - discount_amount + donation_paise
-        
-        # Add updated bill items
-        for item_data in items_data:
-            bill_item = BillItem(
-                bill_id=bill.id,
-                item_type=item_data['type'],
-                item_id=item_data['id'],
-                item_name=item_data['name'],
-                quantity=item_data['quantity'],
-                unit_price=item_data['unit_price'],
-                total_price=item_data['total_price']
-            )
-            db.session.add(bill_item)
-
-        db.session.commit()
-        flash(f'Bill {bill.bill_number} updated successfully!', 'success')
-        return redirect(url_for('billing.view_bill', id=bill.id))
-
-    # GET request - render form with existing bill data
-    devotees = Devotee.query.filter_by(is_active=True).order_by(Devotee.full_name).all()
-    poojas = PoojaService.query.filter_by(is_active=True).order_by(PoojaService.malayalam_name).all()
-    retail_items = InventoryItem.query.filter_by(is_active=True).order_by(InventoryItem.name).all()
-    
-    # Prepare JSON data for template
-    poojas_json = json.dumps([{
-        'id': p.id,
-        'name': p.name,
-        'malayalam_name': p.malayalam_name,
-        'english_name': p.english_name,
-        'display_name': p.display_name,
-        'default_price': p.default_price
-    } for p in poojas], ensure_ascii=False)
-    
-    retail_items_json = json.dumps([{
-        'id': r.id,
-        'name': r.name,
-        'selling_price': r.selling_price
-    } for r in retail_items], ensure_ascii=False)
-    
-    devotees_json = json.dumps([{
-        'id': d.id,
-        'devotee_id': d.devotee_id,
-        'full_name': d.full_name,
-        'phone': d.phone,
-        'family_members': parse_family_members(d.family_members)
-    } for d in devotees], ensure_ascii=False)
-    
-    nakshathrams_json = json.dumps(MALAYALAM_NAKSHATHRAS, ensure_ascii=False)
-    
-    # Convert bill items to edit format
-    bill_json = json.dumps({
-        'id': bill.id,
-        'bill_number': bill.bill_number,
-        'devotee_id': bill.devotee_id,
-        'payment_mode': bill.payment_mode,
-        'discount_type': 'percent' if bill.discount_percent > 0 else 'amount',
-        'discount_value': bill.discount_percent if bill.discount_percent > 0 else bill.discount_amount ,
-        'donation_amount': bill.donation_amount ,
-        'payment_reference': bill.payment_reference,
-        'notes': bill.notes,
-        'items': [{
-            'id': item.id,
-            'type': item.item_type,
-            'name': item.item_name,
-            'quantity': item.quantity,
-            'unit_price': item.unit_price ,
-            'total_price': item.total_price 
-        } for item in bill.items]
-    }, ensure_ascii=False)
-    
-    return render_template('billing/new_bill.html', 
-                           bill=bill,
-                           bill_json=bill_json,
-                           devotees=devotees,
-                           poojas=poojas,
-                           retail_items=retail_items,
-                           poojas_json=poojas_json,
-                           retail_items_json=retail_items_json,
-                           devotees_json=devotees_json,
-                           nakshathrams_json=nakshathrams_json)
 
 
 @bp.route('/<int:id>/receipt')

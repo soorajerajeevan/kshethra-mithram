@@ -82,7 +82,6 @@ class PoojaService(db.Model):
     __tablename__ = 'pooja_services'
     
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False, index=True)  # legacy mirror (Malayalam display)
     english_name = db.Column(db.String(200), index=True)
     malayalam_name = db.Column(db.String(200), index=True)
     category = db.Column(db.String(100))  # Daily Archana, Special Pooja, Homam, Festival
@@ -100,12 +99,11 @@ class PoojaService(db.Model):
 
     @property
     def display_name(self):
-        return self.malayalam_name or self.name or self.english_name or ''
+        return self.malayalam_name or self.english_name or ''
 
     def to_dict(self):
         return {
             "id": self.id,
-            "name": self.name,
             "english_name": self.english_name,
             "malayalam_name": self.malayalam_name,
             "display_name": self.display_name,

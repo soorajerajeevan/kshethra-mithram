@@ -17,21 +17,7 @@
                 <p><strong>Nakshatra:</strong> {{ devotee.nakshatra or 'N/A' }}</p>
                 <p><strong>House Name:</strong> {{ devotee.gotra or 'N/A' }}</p>
                 <p><strong>Address:</strong> {{ devotee.address or 'N/A' }}</p>
-                <p><strong>Family:</strong></p>
-                {% if family_members %}
-                <ul class="mb-2">
-                    {% for member in family_members %}
-                    <li>
-                        {{ member.name }}
-                        {% if member.nakshathram %}
-                        - {{ member.nakshathram }}
-                        {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p>N/A</p>
-                {% endif %}
+                <p><strong>Family:</strong>  {{ devotee.family_members or 'N/A' }}</p>
                 <p><strong>Total Spent:</strong> {{ total_spent|currency }}</p>
                 <a href="{{ url_for('devotees.edit', id=devotee.id) }}" class="btn btn-warning">Edit</a>
             </div>

@@ -39,8 +39,8 @@
                     </div>
                     <div class="mb-3">
                         <label>Family Members</label>
-                        <textarea name="family_members" class="form-control" rows="4" placeholder="One per line. Use: Name | Nakshathram">{{ family_members_text or '' }}</textarea>
-                        <small class="text-muted">Example: Sulochana | 12 ഉത്രം</small>
+                        <textarea name="family_members" class="form-control" rows="4" placeholder="One per line. Use: Name::Nakshathram">{{ devotee.family_members or '' }}</textarea>
+                        <small class="text-muted">Example: name1::nakshathram1;name2::nakshathram2</small>
                     </div>
                     <button type="submit" class="btn btn-primary">Update</button>
                     <a href="{{ url_for('devotees.view', id=devotee.id) }}" class="btn btn-secondary">Cancel</a>

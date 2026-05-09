@@ -55,7 +55,29 @@ def services_list():
                          categories=json_response(categories).get_json(),
                          selected_category=json_response(category).get_json(),
                          search=search)
+    
+@bp.route('/api/services')
+@login_required
+def api_services_list():
 
+    category = request.args.get('category', '')
+    search = (request.args.get('search', '') or '').strip()
+
+    query = PoojaService.query
+
+    if category:
+        query = query.filter_by(category=category)
+
+    if search:
+        pattern = f'%{search}%'
+
+        query = query.filter(
+            PoojaService.english_name.ilike(pattern)
+        )
+
+    services = query.order_by(PoojaService.id).all()
+
+    return json_response(services)
 
 @bp.route('/services/add', methods=['GET', 'POST'])
 @login_required
@@ -72,7 +94,6 @@ def services_add():
         service = PoojaService(
             english_name=request.form.get('english_name'),
             malayalam_name=request.form.get('malayalam_name'),
-            name=request.form.get('malayalam_name') or request.form.get('english_name'),
             category=request.form.get('category'),
             description=request.form.get('description'),
             default_price=price_rupees,
@@ -105,7 +126,6 @@ def services_edit(id):
         
         service.english_name = request.form.get('english_name')
         service.malayalam_name = request.form.get('malayalam_name')
-        service.name = request.form.get('malayalam_name') or request.form.get('english_name')
         service.category = request.form.get('category')
         service.description = request.form.get('description')
         service.default_price = price_rupees
@@ -159,7 +179,6 @@ def services_update_batch():
                 if service and service_id in modified_ids:
                     service.english_name = service_data.get('english_name', service.english_name)
                     service.malayalam_name = service_data.get('malayalam_name', service.malayalam_name)
-                    service.name = service_data.get('malayalam_name') or service_data.get('english_name') or service.name
                     service.category = service_data.get('category', service.category)
                     service.default_price = float(service_data.get('default_price', service.default_price))
                     service.duration_minutes = int(service_data.get('duration_minutes', service.duration_minutes))
@@ -364,7 +383,7 @@ def bookings_add():
     
     # GET request
     devotees = Devotee.query.filter_by(is_active=True).order_by(Devotee.full_name).all()
-    services = PoojaService.query.filter_by(is_active=True).order_by(PoojaService.malayalam_name, PoojaService.name).all()
+    services = PoojaService.query.filter_by(is_active=True).order_by(PoojaService.id).all()
     return render_template('poojas/bookings_add.html',
                          devotees=devotees,
                          services=services)
@@ -484,15 +503,14 @@ def calendar():
 
 @bp.route('/api/list')
 @login_required
-def api_services_list():
+def api_services_get():
     """API endpoint to get all active pooja services"""
-    services = PoojaService.query.filter_by(is_active=True).order_by(PoojaService.malayalam_name, PoojaService.name).all()
+    services = PoojaService.query.filter_by(is_active=True).order_by(PoojaService.id).all()
     return jsonify([{
         'id': s.id,
-        'name': s.name,
         'english_name': s.english_name,
         'malayalam_name': s.malayalam_name,
-        'display_name': s.display_name,
+        'display_name': str(s.id) + ' - ' + s.display_name,
         'default_price': s.default_price,
         'category': s.category
     } for s in services])

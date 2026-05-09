@@ -5,9 +5,9 @@
     <div class="col-md-12">
         <h2>Bill {{ bill.bill_number }}</h2>
         <div class="btn-group float-end mb-2" role="group">
-            <a href="{{ url_for('billing.edit_bill', id=bill.id) }}" class="btn btn-warning">
+            <!-- <a href="{{ url_for('billing.new_bill', id=bill.id) }}" class="btn btn-warning">
                 <i class="bi bi-pencil"></i> Edit Bill
-            </a>
+            </a> -->
             <div class="btn-group" role="group">
                 <button id="printDropdown" type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-printer"></i> Print

@@ -1,0 +1,74 @@
+
+.ag-theme-quartz {
+    --ag-foreground-color: #333;
+    --ag-background-color: #fff;
+    --ag-header-background-color: #f1a855;
+    --ag-header-foreground-color: #fff;
+    --ag-row-border-color: #e0e0e0;
+}
+
+.left-border-column {
+    border-left: 1px solid #e5e5e5;
+}
+
+.right-border-column {
+    border-right: 1px solid #e5e5e5 !important;
+}
+
+#poojaGrid {
+    height: 600px;
+    width: 100%;
+}
+
+.filter-section {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, #373c5c 0%, #1d465e 100%);
+    color: white;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-filter-reset {
+    background: #6c757d;
+    color: white;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
