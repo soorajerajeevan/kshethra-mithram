@@ -50,7 +50,6 @@ class Devotee(db.Model):
     email = db.Column(db.String(120))
     address = db.Column(db.Text)
     gotra = db.Column(db.String(100))
-    family_members = db.Column(db.Text)  # JSON or comma-separated
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -58,6 +57,7 @@ class Devotee(db.Model):
     # Relationships
     bills = db.relationship('Bill', backref='devotee', lazy='dynamic')
     bookings = db.relationship('PoojaBooking', backref='devotee', lazy='dynamic')
+    family_members = db.relationship('FamilyMember', backref='devotee', lazy='dynamic')
 
     def to_dict(self):
         return {
@@ -69,13 +69,32 @@ class Devotee(db.Model):
             "email": self.email,
             "address": self.address,
             "gotra": self.gotra,
-            "family_members": self.family_members,
+            "family_members": [member.to_dict() for member in self.family_members],
             "is_active": self.is_active
         }
     
     def __repr__(self):
         return f'<Devotee {self.devotee_id} - {self.full_name}>'
 
+class FamilyMember(db.Model):
+    """Family members of a devotee for pooja bookings"""
+    __tablename__ = 'family_members'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    devotee_id = db.Column(db.Integer, db.ForeignKey('devotees.id'), nullable=False)
+    name = db.Column(db.String(150), nullable=False)
+    nakshathram = db.Column(db.String(50))
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "devotee_id": self.devotee_id,
+            "name": self.name,
+            "nakshathram": self.nakshathram
+        }
+    
+    def __repr__(self):
+        return f'<FamilyMember {self.name} ({self.nakshathram})>'
 
 class PoojaService(db.Model):
     """Pooja services master"""

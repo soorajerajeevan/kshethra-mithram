@@ -1,5 +1,5 @@
 from app import db
-from app.models import (User, Devotee, PoojaService, InventoryItem, Priest, TempleSettings)
+from app.models import (FamilyMember, User, Devotee, PoojaService, InventoryItem, Priest, TempleSettings)
 from datetime import datetime
 import json
 
@@ -182,13 +182,12 @@ def seed_all():
             '+91 9746199209',
             'sooraj@email.com',
             'Edattu, Varapptty',
-            'VPTY',
-            'Geethu::തൃക്കേട്ട;Sulochana::ഉത്രം'
+            'VPTY'
         )
     ]
     
     devotee_id_start = 1
-    for name, nakshatra, phone, email, address, gotra, family in devotees_data:
+    for name, nakshatra, phone, email, address, gotra in devotees_data:
         if not Devotee.query.filter_by(phone=phone).first():
             devotee = Devotee(
                 devotee_id=f'DEV-{devotee_id_start:05d}',
@@ -197,11 +196,25 @@ def seed_all():
                 phone=phone,
                 email=email,
                 address=address,
-                gotra=gotra,
-                family_members=family
+                gotra=gotra
             )
             db.session.add(devotee)
             devotee_id_start += 1
+            
+    # Create sample family members for the first devotee
+    first_devotee = Devotee.query.first()
+    if first_devotee:
+        family_members = [
+            ('Geethu', 'തൃക്കേട്ട'),
+            ('Sulochana', 'ഉത്രം')
+        ]
+        for name, nakshatra in family_members:
+            member = FamilyMember(
+                devotee_id=first_devotee.id,
+                name=name,
+                nakshathram=nakshatra
+            )
+            db.session.add(member)
     
     print("✓ Sample devotees created")
     

@@ -290,12 +290,7 @@ def new_bill():
                 pooja_devotee_name = (request.form.get(f'pooja_devotee_name_{i}') or '').strip()
                 pooja_nakshathram = (request.form.get(f'pooja_nakshathram_{i}') or '').strip()
                 pooja_date = (request.form.get(f'pooja_date_{i}') or '').strip()
-                quantity = max(_safe_float(request.form.get(f'pooja_quantity_{i}'), 1), 1)
-                if pooja_devotee_name:
-                    key = pooja_devotee_name.lower()
-                    if key not in family_member_map:
-                        family_member_map[key] = pooja_devotee_name + '::' + pooja_nakshathram
-                        
+                quantity = max(_safe_float(request.form.get(f'pooja_quantity_{i}'), 1), 1)                        
                 custom_price = request.form.get(f'pooja_price_{i}')
                 price_paise = int(_safe_float(custom_price)) if custom_price else service.default_price
                 total_price = int(price_paise * quantity)
@@ -320,6 +315,10 @@ def new_bill():
                     'service': service,
                     'add_to_booking': request.form.get(f'add_to_booking_{i}') == 'on'
                 })
+                
+                # Update family member map for this pooja item
+                if pooja_devotee_name and pooja_nakshathram:
+                    family_member_map[pooja_devotee_name] = pooja_nakshathram
 
 
         # Get all retail items
@@ -389,9 +388,21 @@ def new_bill():
         db.session.add(bill)
         db.session.flush()  # Get bill.id
 
-        # Save pooja devotee names as family members for this devotee.
+        # Check for any chagne in exisitng family members and update the database accordingly
         if devotee:
-            devotee.family_members = ';'.join(f"{name}::{nakshathram}" for name, nakshathram in family_member_map.items())
+            existing_members = {member.name: member for member in devotee.family_members}
+            for name, nakshathram in family_member_map.items():
+                if name in existing_members:
+                    member = existing_members[name]
+                    if member.nakshathram != nakshathram:
+                        member.nakshathram = nakshathram  # Update nakshathram if changed
+                else:
+                    new_member = FamilyMember(
+                        devotee_id=devotee.id,
+                        name=name,
+                        nakshathram=nakshathram
+                    )
+                    db.session.add(new_member)
 
         # Add bill items
         for item_data in items_data:
@@ -543,7 +554,7 @@ def billing_form_data():
             "address": d.address or '',
             'phone': d.phone or '',
             'nakshatra': d.nakshatra or '',
-            'family_members': d.family_members or '',
+            'family_members': [member.to_dict() for member in d.family_members.all()] or [],
         }
         for d in devotees
     ]
