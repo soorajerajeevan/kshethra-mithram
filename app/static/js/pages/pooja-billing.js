@@ -5,13 +5,14 @@ let retailCounter = 0;
 let poojas = [];
 let retailItems = [];
 let devotees = [];
-let devoteeSelect = null;
-let nakshathrams = [];
+let devoteeSelectTS = null;
+let selectedDevotee = {};
 let familyMembers = [];
+let nakshathrams = [];
 let tomSelectInstances = [];
 
 function poojaLabel(p) { return `${p.id} - ${p.malayalam_name || p.name}`; }
-function devoteeLabel(d) { return `${d.devotee_id} - ${d.full_name} (${d.phone || 'No phone'})`; }
+function devoteeLabel(d) { return `${d.full_name} (${d.family_name || ''}) - ${d.phone || 'No phone'}`; }
 
 document.addEventListener(
     'DOMContentLoaded',
@@ -25,13 +26,7 @@ document.addEventListener(
     }
 );
 
-async function fetchPoojaServices() {
-    const response = await fetch('/poojas/api/billing-form-data');
-    return await response.json();
-}
-
 async function loadBillingFormData() {
-
     try {
         const response = await fetch('/billing/api/billing-form-data');
         const data = await response.json();
@@ -39,6 +34,7 @@ async function loadBillingFormData() {
         retailItems = data.retailItems || [];
         devotees = data.devotees || [];
         nakshathrams = data.nakshathrams || [];
+        devotees = devotees.map(d => ({ ...d, display_name: devoteeLabel(d) }));
 
         initializeSearchables();
         buildQuickRetailItems();
@@ -63,31 +59,69 @@ function initSearchableSelect(selector, options = {}) {
 function initializeSearchables() {
 
     // #Devotee Dropdown
-    devoteeSelect = initSearchableSelect('#devotee_id', {
+    devoteeSelectTS = initSearchableSelect('#devotee_id', {
         placeholder: 'Type devotee name / ID / phone',
         options: devotees,
         valueField: 'id',
-        labelField: 'full_name',
+        labelField: 'display_name',
         searchField: ['full_name', 'phone', 'family_name'],
         create: function (input) {
             const name = (input || '').trim();
             if (!name) return false;
             return {
                 id: 0, // Temporary ID for new devotee
-                full_name: `${name} (New devotee)`
+                display_name: `${name} (New devotee)`,
+                full_name: name,
             };
         },
         onChange: function (id) {
-            refreshAllPoojaFamilyOptions(id);
-            syncPrimaryDevoteeToFirstPooja();
-            if (id > 0) {
-                updateEditDevoteeButton();
-            } else {
+            selectedDevotee = getSelectedPrimaryDevotee();
+            document.getElementById('devotee_name').value = selectedDevotee.full_name;
+            updateFamilyMemberOptions(id);
+            updateEditDevoteeButton(id);
+            if (id == 0) {
                 toggleNewDevoteePhone(id);
             }
         }
     });
 }
+
+function getSelectedPrimaryDevotee() {
+    const devoteeId = document.getElementById('devotee_id').value || '';
+    if (!/^\d+$/.test(devoteeId)) return null;
+    if (devoteeId == 0) {
+        return {
+            id: 0,
+            full_name: document.getElementById('devotee_id').options[document.getElementById('devotee_id').selectedIndex].text.replace(' (New devotee)', '').trim(),
+            nakshathram: '',
+            family_members: [],
+            phone: document.getElementById('new_devotee_phone').value.trim()
+        };
+    }
+    return devotees.find(d => String(d.id) === String(devoteeId)) || null;
+}
+
+function updateFamilyMemberOptions(devoteeId) {
+    if (selectedDevotee) {
+        familyMembers = [{ name: selectedDevotee.full_name, nakshathram: selectedDevotee.nakshatra }];
+        familyMembers.push(...selectedDevotee.family_members.map(m => ({ name: m.name, nakshathram: m.nakshathram })));
+    }
+    console.log("Refreshing family member options for all pooja rows. Family members:", familyMembers);
+    Object.keys(tomSelectInstances)
+        .filter(key => key.startsWith('family_'))
+        .forEach(key => {
+            const ts = tomSelectInstances[key];
+            ts.clearOptions();
+
+            familyMembers.forEach(m => {
+                ts.addOption(m);
+            });
+            if (key === 'family_0' && selectedDevotee) {
+                ts.setValue(selectedDevotee.full_name, false);
+            }
+        });
+}
+
 
 function toggleNewDevoteePhone(value) {
     const wrap = document.getElementById('newDevoteePhoneWrap');
@@ -152,18 +186,11 @@ function initPoojaRowSearchables(index) {
     }
 }
 
-function getSelectedPrimaryDevotee() {
-    const devoteeId = document.getElementById('devotee_id').value || '';
-    if (!/^\d+$/.test(devoteeId)) return null;
-    return devotees.find(d => String(d.id) === String(devoteeId)) || null;
-}
-
-function updateEditDevoteeButton() {
+function updateEditDevoteeButton(id) {
     const btn = document.getElementById('editDevoteeBtn');
-    if (!btn) return;
-    const selected = getSelectedPrimaryDevotee();
-    if (selected) {
-        btn.href = `/devotees/${selected.id}/edit`;
+    if (!btn && !id) return;
+    if (id > 0) {
+        btn.href = `/devotees/${id}/edit`;
         btn.classList.remove('disabled');
         btn.setAttribute('aria-disabled', 'false');
     } else {
@@ -172,73 +199,6 @@ function updateEditDevoteeButton() {
         btn.setAttribute('aria-disabled', 'true');
     }
 }
-
-function getPrimaryDevotee() {
-    console.log("Getting primary devotee. Current select value:", devoteeSelect ? devoteeSelect.getValue() : 'N/A');
-    const devoteeValue = devoteeSelect.getValue();
-    if (!devoteeValue) return '';
-    if (devoteeValue == 0) {
-        const options = devoteeSelect.options;
-        return {
-            'id': 0,
-            'name': "NEW::"+ String(options[0]['full_name']).replace(' (New devotee)', '').trim(),
-            'nakshathram': ''
-        };
-    } else {
-        const selectedDevotee = devotees.find(d => String(d.id) === String(devoteeValue));
-        return {
-            'id': selectedDevotee ? selectedDevotee.id : null,
-            'name': selectedDevotee ? selectedDevotee.full_name : '',
-            'nakshathram': selectedDevotee ? selectedDevotee.nakshatra : ''
-        };
-    }
-}
-
-function syncPrimaryDevoteeToFirstPooja() {
-    const firstSelect = document.getElementById('pooja_devotee_name_0');
-    if (!firstSelect) return;
-    const primaryDevotee = getPrimaryDevotee();
-    if (!primaryDevotee) return;
-    const ts = tomSelectInstances['family_0']
-    console.log("Syncing primary devotee to first pooja family select. Primary devotee:", primaryDevotee, "TomSelect instance:", ts);
-    if (ts) {
-        ts.setValue(primaryDevotee.name);
-    }
-}
-
-function getFamilyMembersForSelectedDevotee() {
-    const selected = getSelectedPrimaryDevotee();
-    if (!selected || !Array.isArray(selected.family_members)) return [];
-    return selected.family_members.filter(x => x && x.name);
-}
-
-function refreshAllPoojaFamilyOptions(devoteeId) {
-    if (devoteeId > 0) {
-        const selectedDevotee = devotees.find(d => String(d.id) == String(devoteeId));
-        console.log("Selected devotee for family options refresh:", selectedDevotee);
-        if (selectedDevotee) {
-            familyMembers = [{ name: selectedDevotee.full_name, nakshathram: selectedDevotee.nakshatra }];
-            familyMembers.push(...selectedDevotee.family_members.map(m => ({ name: m.name, nakshathram: m.nakshathram })));
-        }
-    } else {
-        familyMembers = [{ name: getPrimaryDevotee().name, nakshathram: getPrimaryDevotee().nakshathram }];
-    }
-    console.log("Refreshing family member options for all pooja rows. Family members:", familyMembers);
-    Object.keys(tomSelectInstances)
-        .filter(key => key.startsWith('family_'))
-        .forEach(key => {
-            const ts = tomSelectInstances[key];
-            console.log(`Updating family member options for ${key}:`, ts, familyMembers);
-            ts.clearOptions();
-
-            familyMembers.forEach(m => {
-                ts.addOption(m);
-            });
-            console.log(`Updated family member options for ${key}:`, familyMembers);
-            // Do something with elements[key]
-        });
-}
-
 
 function prefillNakshathramFromFamily(index) {
     const nakshSelect = tomSelectInstances[`nakshathram_${index}`];
@@ -294,7 +254,6 @@ function addPoojaItem() {
 
     container.appendChild(itemDiv);
     initPoojaRowSearchables(poojaCounter);
-    console.log('Added pooja item with index:', poojaCounter, 'date :', getToday());
     document.getElementById('pooja_date_' + poojaCounter).value = getToday();
     poojaCounter++;
     document.getElementById('poojaCount').value = poojaCounter;
@@ -369,7 +328,6 @@ function updatePoojaPrice(index) {
     const priceInput = document.getElementById(`pooja_price_${index}`);
     if (select && select.value) {
         const selectedOption = poojas.find(p => p.id == select.value);
-        console.log('Selected pooja for price update:', selectedOption);
         const price = Number(selectedOption?.default_price || 0);
         priceInput.value = (price).toFixed(2);
     } else {
@@ -380,10 +338,12 @@ function updatePoojaPrice(index) {
     const toggle = document.getElementById(`pooja_booking_toggle_${index}`);
     toggle.checked = getAddToBookingDefault(select.value);
 }
+
 function getAddToBookingDefault(poojaId) {
     const pooja = poojas.find(p => String(p.id) === String(poojaId));
     return pooja ? pooja.add_to_booking : false;
 }
+
 function updateRetailPrice(index) {
     console.log('Updating retail price for index:', index);
     const select = document.getElementById(`retails_select_${index}`);
@@ -542,15 +502,25 @@ getToday = () => {
 
 
 document.getElementById('billForm').addEventListener('submit', function (event) {
-    const devoteeValue = document.getElementById('devotee_id').value || '';
+    
+        const formData = new FormData(this);
+
+        console.log('=== Form Data ===');
+
+        for (const [key, value] of formData.entries()) {
+            console.log(`${key}:`, value);
+        }
+
+    const devoteeName = document.getElementById('devotee_name').value || '';
+    const devoteeId = document.getElementById('devotee_id').value || '';
     const phoneEl = document.getElementById('new_devotee_phone');
     const phone = phoneEl ? (phoneEl.value || '').trim() : '';
-    if (devoteeValue.startsWith('NEW::') && !phone) {
+    if (devoteeId == 0 && !phone) {
         event.preventDefault();
         alert('Please enter phone number for new devotee.');
     }
 
-    const invalidFields = form.querySelectorAll(':invalid');
+    const invalidFields = this.querySelectorAll(':invalid');
 
     if (invalidFields.length > 0) {
 
@@ -573,6 +543,18 @@ document.getElementById('billForm').addEventListener('submit', function (event) 
 
         // Prevent submit temporarily for debugging
         e.preventDefault();
+
+
+        // -----------------------------
+        // Log Submitted Data
+        // -----------------------------
+        const formData = new FormData(form);
+
+        console.log('=== Form Data ===');
+
+        for (const [key, value] of formData.entries()) {
+            console.log(`${key}:`, value);
+        }
     }
 });
 

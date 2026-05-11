@@ -107,10 +107,22 @@ def edit(id):
         devotee.email = request.form.get('email')
         devotee.address = request.form.get('address')
         devotee.gotra = request.form.get('gotra')
-        devotee.family_members = request.form.get('family_members')
         devotee.updated_at = datetime.utcnow()
         
         db.session.commit()
+        db.flush()
+        
+        #Update family members in db, if any changes, create a new record in family members table with the updated details and link it to the devotee if not exist. 
+        # family member is in format [{name: '', nakshathram: '' }]
+        family_members = request.form.get('family_members')
+        if family_members:
+            try:
+                family_members = json.loads(family_members)
+                devotee.family_members = family_members
+                db.session.commit()
+            except Exception as e:
+                flash('Error updating family members: ' + str(e), 'danger')
+                return redirect(url_for('devotees.edit', id=devotee.id))
         
         flash('Devotee updated successfully!', 'success')
         return redirect(url_for('devotees.view', id=devotee.id))

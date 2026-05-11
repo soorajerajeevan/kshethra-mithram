@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response, session
 from flask_login import login_required, current_user
 from app import db
-from app.models import Bill, BillItem, Devotee, PoojaService, InventoryItem, PoojaBooking, StockTransaction
+from app.models import Bill, BillItem, Devotee, PoojaService, InventoryItem, PoojaBooking, StockTransaction, FamilyMember
 from datetime import datetime
 import re
 import json
@@ -122,21 +122,21 @@ def validate_new_bill_form(form):
     errors = []
 
     # --- 1. Devotee validation ---
-    devotee_raw = (form.get('devotee_id') or '').strip()
-    if not devotee_raw:
+    devotee_name = (form.get('devotee_name') or '').strip()
+    devotee_id = (form.get('devotee_id') or '').strip()
+    if not devotee_name:
         errors.append('Please select a devotee or enter a new devotee name.')
-    elif devotee_raw.startswith('NEW::'):
-        new_name = devotee_raw.replace('NEW::', '', 1).strip()
-        if not new_name:
+    elif devotee_id == '0':        
+        if not devotee_name:
             errors.append('New devotee name cannot be empty.')
         new_phone = (form.get('new_devotee_phone') or '').strip()
         if not new_phone:
             errors.append('Phone number is required for a new devotee.')
     else:
-        if not devotee_raw.isdigit():
+        if devotee_name.isdigit() or not devotee_id.isdigit:
             errors.append('Invalid devotee selection.')
         else:
-            devotee = Devotee.query.get(int(devotee_raw))
+            devotee = Devotee.query.get(int(devotee_id))
             if not devotee:
                 errors.append('Selected devotee not found.')
 
@@ -159,8 +159,8 @@ def validate_new_bill_form(form):
             if not service:
                 errors.append(f'{row_label}: Selected pooja service does not exist.')
 
-        devotee_name = (form.get(f'pooja_devotee_name_{i}') or '').strip()
-        if not devotee_name:
+        pooja_devotee_name = (form.get(f'pooja_devotee_name_{i}') or '').strip()
+        if not pooja_devotee_name:
             errors.append(f'{row_label}: Devotee name is required.')
 
         nakshathram = (form.get(f'pooja_nakshathram_{i}') or '').strip()
@@ -253,14 +253,14 @@ def new_bill():
         # One-time submission token to prevent refresh/back duplicate POST.
         session.pop('new_bill_submission_token', None)
 
-        devotee_raw = (request.form.get('devotee_id') or '').strip()
+        devotee_id = int((request.form.get('devotee_id') or '').strip())
+        devotee_name = (request.form.get('devotee_name') or '').strip()
         new_devotee_phone = (request.form.get('new_devotee_phone') or '').strip()
         new_devotee_house_name = (request.form.get('new_devotee_house_name') or '').strip()
         family_member_map = {}
 
-        if devotee_raw.startswith('NEW::'):
-            new_name = devotee_raw.replace('NEW::', '', 1).strip()
-
+        if devotee_id==0:
+            new_name = devotee_name.strip()
             devotee = Devotee(
                 devotee_id=generate_devotee_id(),
                 full_name=new_name,
@@ -272,7 +272,6 @@ def new_bill():
             db.session.flush()
             devotee_id = devotee.id
         else:
-            devotee_id = int(devotee_raw)
             devotee = Devotee.query.get(devotee_id)
 
         # Parse items from form (can have multiple poojas and retail items)
