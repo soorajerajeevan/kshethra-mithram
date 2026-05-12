@@ -103,8 +103,10 @@ function getSelectedPrimaryDevotee() {
 
 function updateFamilyMemberOptions(devoteeId) {
     if (selectedDevotee) {
-        familyMembers = [{ name: selectedDevotee.full_name, nakshathram: selectedDevotee.nakshatra }];
-        familyMembers.push(...selectedDevotee.family_members.map(m => ({ name: m.name, nakshathram: m.nakshathram })));
+        if (selectedDevotee.family_members.size == 0)
+            familyMembers = [{ name: selectedDevotee.full_name, nakshathram: selectedDevotee.nakshatra }];
+        else
+            familyMembers = selectedDevotee.family_members.map(m => ({ name: m.name, nakshathram: m.nakshathram }));
     }
     console.log("Refreshing family member options for all pooja rows. Family members:", familyMembers);
     Object.keys(tomSelectInstances)
@@ -161,7 +163,10 @@ function initPoojaRowSearchables(index) {
         searchField: ['english_name', 'id', 'malayalam_name'],
         options: nakshathrams.map(n => ({ id: n.id, english_name: n.english_name, malayalam_name: n.malayalam_name, display_name: n.id + ' - ' + n.malayalam_name })),
         placeholder: 'Nakshathram',
-        create: false
+        create: false,
+        onChange: function () {
+            updateStarForFamilyMembers(index);
+        }
     });
 
     const familyTs = initSearchableSelect(familySelector, {
@@ -170,7 +175,17 @@ function initPoojaRowSearchables(index) {
         searchField: ['name'],
         placeholder: 'Family member name',
         options: familyMembers,
-        create: true,
+        create: function (input) {
+            console.log("Creating new member", input)
+            const name = (input || '').trim();
+            if (!name) return false;
+            const newMem = {
+                id: 0, // Temporary ID for new devotee
+                name: name,
+            };
+            familyMembers.push(newMem);
+            return newMem;
+        },
         onChange: function () {
             prefillNakshathramFromFamily(index);
         }
@@ -207,6 +222,28 @@ function prefillNakshathramFromFamily(index) {
     const familyMemberName = familySelect.getValue();
     nakshSelect.setValue(''); // Clear nakshathram when family member change
     nakshSelect.setValue(familyMembers.find(m => m.name === familyMemberName)?.nakshathram || '', true);
+}
+let isRefreshing = false;
+
+function updateStarForFamilyMembers(index) {
+    const nakshSelect = tomSelectInstances[`nakshathram_${index}`];
+    if (!nakshSelect || isRefreshing) return;
+    isRefreshing = true;
+    const familyMemberNakshathram = nakshSelect.getValue();
+    Object.entries(tomSelectInstances).forEach(([key, instance]) => {
+        if (key.startsWith("family_") && key != "family_" + index) {
+            const familyMemberName = instance.getValue();
+            console.log("Checking star change for ", key, familyMemberName)
+            const member = familyMembers.find(m => m.name === familyMemberName);
+            if (member) {
+                member.nakshathram = String(familyMemberNakshathram);
+                instance.refreshOptions(true);
+                instance.refreshItems();
+            }
+        }
+        isRefreshing = false
+    });
+
 }
 
 function buildQuickRetailItems() {
@@ -502,14 +539,14 @@ getToday = () => {
 
 
 document.getElementById('billForm').addEventListener('submit', function (event) {
-    
-        const formData = new FormData(this);
 
-        console.log('=== Form Data ===');
+    const formData = new FormData(this);
 
-        for (const [key, value] of formData.entries()) {
-            console.log(`${key}:`, value);
-        }
+    console.log('=== Form Data ===');
+
+    for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+    }
 
     const devoteeName = document.getElementById('devotee_name').value || '';
     const devoteeId = document.getElementById('devotee_id').value || '';

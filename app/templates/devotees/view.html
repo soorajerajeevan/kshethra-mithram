@@ -13,11 +13,18 @@
             <div class="card-header">Details</div>
             <div class="card-body">
                 <p><strong>Phone:</strong> {{ devotee.phone }}</p>
-                <p><strong>Email:</strong> {{ devotee.email or 'N/A' }}</p>
-                <p><strong>Nakshatra:</strong> {{ devotee.nakshatra or 'N/A' }}</p>
+                <!-- <p><strong>Email:</strong> {{ devotee.email or 'N/A' }}</p> -->
                 <p><strong>House Name:</strong> {{ devotee.gotra or 'N/A' }}</p>
                 <p><strong>Address:</strong> {{ devotee.address or 'N/A' }}</p>
-                <p><strong>Family:</strong>  {{ devotee.family_members or 'N/A' }}</p>
+                <p><strong>Family:</strong>
+                    {% if devotee.family_members %}
+                        {% for fm in devotee.family_members %}
+                           <br>&nbsp;&nbsp; {{ fm.name }}{% if fm.nakshathram %} ({{ fm.nakshathram }}){% endif %}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </p>
                 <p><strong>Total Spent:</strong> {{ total_spent|currency }}</p>
                 <a href="{{ url_for('devotees.edit', id=devotee.id) }}" class="btn btn-warning">Edit</a>
             </div>

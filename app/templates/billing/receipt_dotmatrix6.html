@@ -3,282 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt - Dot Matrix 6"</title>
+    <title>Receipt - Dot Matrix 6in</title>
     <style>
-        * {
+        @page { size: 6in auto; margin: 0; }
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            line-height: 1.3;
-            width: 6in;
-            padding: 0.2in;
-            background: white;
+            background: #fff;
             color: #000;
-        }
-        
-        .receipt-container {
-            width: 100%;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 8px;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 4px;
-        }
-        
-        .om-symbol {
+            font-family: "Courier New", Courier, monospace;
             font-size: 14px;
-            margin-bottom: 2px;
+            line-height: 1;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
         }
-        
-        .temple-name {
-            font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 2px;
+        .receipt-canvas {
+            position: relative;
+            width: {{ dotmatrix_layout.metrics.canvasWidth if dotmatrix_layout else 576 }}px;
+            height: {{ dotmatrix_layout.metrics.canvasHeight if dotmatrix_layout else 1000 }}px;
+            overflow: hidden;
         }
-        
-        .temple-details {
-            font-size: 10px;
-            line-height: 1.2;
+        .word-layer {
+            position: absolute;
+            white-space: pre;
         }
-        
-        .bill-info {
-            margin: 6px 0;
-            font-size: 10px;
-            line-height: 1.3;
-        }
-        
-        .bill-info div {
-            margin: 2px 0;
-        }
-        
-        .bill-header {
-            margin: 6px 0 4px 0;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 2px;
-            font-weight: bold;
-            font-size: 10px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 6px 0;
-            font-size: 10px;
-        }
-        
-        thead {
-            border-bottom: 1px dashed #000;
-        }
-        
-        th {
-            text-align: left;
-            padding: 2px 2px;
-            font-weight: bold;
-            border: none;
-        }
-        
-        td {
-            padding: 2px 2px;
-            border: none;
-        }
-        
-        tbody tr {
-            border: none;
-        }
-        
-        .qty {
-            text-align: center;
-            width: 15%;
-        }
-        
-        .amount {
-            text-align: right;
-            width: 20%;
-        }
-        
-        .item-name {
-            text-align: left;
-            flex: 1;
-            word-break: break-word;
-        }
-        
-        .totals {
-            margin: 4px 0;
-            border-top: 1px dashed #000;
-            border-bottom: 1px dashed #000;
-            padding: 4px 0;
-            font-size: 10px;
-        }
-        
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 2px 0;
-        }
-        
-        .total-label {
-            flex: 1;
-        }
-        
-        .total-value {
-            text-align: right;
-            min-width: 60px;
-        }
-        
-        .grand-total {
-            font-weight: bold;
-            font-size: 11px;
-            margin: 3px 0;
-            padding: 2px 0;
+        .divider-layer {
+            position: absolute;
             border-top: 1px solid #000;
+            height: 0;
         }
-        
-        .payment-info {
-            margin: 4px 0;
-            font-size: 10px;
-            line-height: 1.2;
-        }
-        
-        .payment-info div {
-            margin: 2px 0;
-        }
-        
-        .footer {
-            margin-top: 6px;
-            padding-top: 4px;
-            border-top: 1px dashed #000;
-            text-align: center;
-            font-size: 9px;
-            line-height: 1.3;
-        }
-        
-        .thank-you {
-            font-weight: bold;
-            margin: 3px 0;
-            font-size: 10px;
-        }
-        
-        .dotted-line {
-            text-align: center;
-            margin: 2px 0;
-            letter-spacing: 2px;
-        }
-        
-        @media print {
-            body {
-                margin: 0;
-                padding: 0.1in;
-                width: auto;
-            }
-            .receipt-container {
-                page-break-inside: avoid;
-            }
+        .divider-layer[data-char="="] {
+            border-top-width: 2px;
         }
     </style>
 </head>
 <body>
-    <div class="receipt-container">
-        <div class="header">
-            <div class="om-symbol">🕉️</div>
-            <div class="temple-name">{{ temple_name }}</div>
-            <div class="temple-details">{{ temple_address }}</div>
-            <div class="temple-details">Ph: {{ temple_phone }}</div>
-        </div>
-        
-        <div class="bill-info">
-            <div><strong>Bill#:</strong> {{ bill.bill_number }}</div>
-            <div><strong>Date:</strong> {{ bill.bill_date|format_datetime('%d/%m/%Y %H:%M') }}</div>
-            <div><strong>Devotee:</strong> {{ bill.devotee.full_name }}</div>
-            {% if bill.devotee.devotee_id %}
-            <div><strong>ID:</strong> {{ bill.devotee.devotee_id }}</div>
-            {% endif %}
-        </div>
-        
-        <div class="bill-header">
-            ITEMS
-        </div>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th class="item-name">Item Name</th>
-                    <th class="qty">Qty</th>
-                    <th class="amount">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in bill.items %}
-                <tr>
-                    <td class="item-name">{{ item.item_name }}</td>
-                    <td class="qty">{{ item.quantity }}</td>
-                    <td class="amount">{{ item.total_price|currency }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        
-        <div class="totals">
-            <div class="total-row">
-                <span class="total-label">Subtotal:</span>
-                <span class="total-value">{{ bill.subtotal|currency }}</span>
-            </div>
-            
-            {% if bill.discount_amount > 0 %}
-            <div class="total-row">
-                <span class="total-label">Discount{% if bill.discount_percent > 0 %} ({{ bill.discount_percent|round(1) }}%){% endif %}:</span>
-                <span class="total-value">-{{ bill.discount_amount|currency }}</span>
-            </div>
-            {% endif %}
-            
-            {% if bill.donation_amount > 0 %}
-            <div class="total-row">
-                <span class="total-label">Donation:</span>
-                <span class="total-value">{{ bill.donation_amount|currency }}</span>
-            </div>
-            {% endif %}
-            
-            <div class="grand-total">
-                <div class="total-row">
-                    <span class="total-label">TOTAL:</span>
-                    <span class="total-value">{{ bill.grand_total|currency }}</span>
-                </div>
-            </div>
-        </div>
-        
-        {% if bill.payment_mode or bill.payment_reference %}
-        <div class="payment-info">
-            {% if bill.payment_mode %}
-            <div><strong>Mode:</strong> {{ bill.payment_mode }}</div>
-            {% endif %}
-            {% if bill.payment_reference %}
-            <div><strong>Ref:</strong> {{ bill.payment_reference }}</div>
-            {% endif %}
-        </div>
+    <div class="receipt-canvas">
+        {% if dotmatrix_layout %}
+            {% for word in dotmatrix_layout.words %}
+                {% if word.enabled %}
+                <div class="word-layer" style="left: {{ word.x }}px; top: {{ word.y }}px;">{{ word.text }}</div>
+                {% endif %}
+            {% endfor %}
+            {% for divider in dotmatrix_layout.dividers %}
+                {% if divider.enabled %}
+                <div class="divider-layer" data-char="{{ divider.char }}" style="left: {{ divider.x }}px; top: {{ divider.y }}px; width: {{ divider.width }}px;"></div>
+                {% endif %}
+            {% endfor %}
         {% endif %}
-        
-        <div class="footer">
-            <div class="dotted-line">.......................</div>
-            <div class="thank-you">THANK YOU</div>
-            {% if receipt_footer %}
-            <div style="margin: 2px 0; font-size: 9px;">{{ receipt_footer }}</div>
-            {% endif %}
-            <div style="margin-top: 2px; font-size: 8px;">
-                Powered by Temple Mgmt System
-            </div>
-            <div class="dotted-line">.......................</div>
-        </div>
     </div>
-    
-    <script>
-        // Auto-print on load (optional)
-        // window.onload = function() { window.print(); }
-    </script>
 </body>
 </html>

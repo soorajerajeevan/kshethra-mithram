@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+{% block title %}Dot Matrix Layout{% endblock %}
+{% block extra_css %}
+<style>
+    .layout-wrap {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 16px;
+    }
+
+    .panel {
+        background: #fff;
+        border-radius: 12px;
+        padding: 14px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, .08);
+    }
+
+    .preview-host {
+        overflow: auto;
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 8px;
+        min-height: 70vh;
+    }
+
+    #receiptCanvas {
+        position: relative;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #ced4da;
+    }
+
+    .line,
+    .word,
+    .divider {
+        position: absolute;
+        font-family: "Courier New", Courier, monospace;
+        user-select: none;
+        cursor: move;
+    }
+
+    .line {
+        white-space: pre;
+        color: transparent;
+        font-size: 12px;
+    }
+
+    .line.ghost {
+        color: rgba(0, 0, 0, .30);
+        pointer-events: none;
+    }
+
+    .word {
+        white-space: pre;
+        font-size: 14px;
+        color: #000;
+    }
+
+    .divider {
+        border-top: 1px solid #000;
+        height: 0;
+    }
+
+    .divider.eq {
+        border-top-width: 2px;
+    }
+
+    .selected {
+        outline: 2px solid #d63384;
+        outline-offset: 1px;
+    }
+
+    .list-box {
+        max-height: 280px;
+        overflow: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 6px;
+    }
+
+    .item-row {
+        padding: 4px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .item-row:hover {
+        background: #f1f3f5;
+    }
+
+    .item-row.active {
+        background: #cfe2ff;
+    }
+
+    @media (max-width: 992px) {
+        .layout-wrap {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .box {
+        position: relative;
+    }
+
+    .box::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+
+        width: 1px;
+        background: rgba(0, 0, 0, 0.1);
+
+        transform: translateX(-50%);
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h2 class="mb-0"><i class="bi bi-layout-text-window-reverse"></i> Dot Matrix Layout Designer</h2>
+    <a href="{{ url_for('settings.index') }}" class="btn btn-outline-secondary">Back to Settings</a>
+</div>
+<div class="layout-wrap">
+    <div class="panel">
+        <p class="text-muted small">Preview uses Bill: <strong>{{ preview_bill.bill_number }}</strong></p>
+        <div class="mb-2 d-flex gap-2">
+            <button id="modeLine" class="btn btn-sm btn-primary">Line Mode</button>
+            <button id="modeWord" class="btn btn-sm btn-outline-primary">Word Mode</button>
+        </div>
+        <div class="mb-2">
+            <label class="form-label mb-1">Selected item</label>
+            <input id="selectedLabel" class="form-control form-control-sm" readonly>
+        </div>
+        <div class="row g-2 mb-2">
+            <div class="col-6"><button data-nudge="-1,0" class="btn btn-sm btn-outline-dark w-100">X -1</button></div>
+            <div class="col-6"><button data-nudge="1,0" class="btn btn-sm btn-outline-dark w-100">X +1</button></div>
+            <div class="col-6"><button data-nudge="0,-1" class="btn btn-sm btn-outline-dark w-100">Y -1</button></div>
+            <div class="col-6"><button data-nudge="0,1" class="btn btn-sm btn-outline-dark w-100">Y +1</button></div>
+        </div>
+        <div class="mb-2">
+            <button id="toggleEnabled" class="btn btn-sm btn-warning w-100">Enable/Disable Selected</button>
+        </div>
+        <div class="mb-2">
+            <label class="form-label mb-1">Divider char</label>
+            <select id="dividerChar" class="form-select form-select-sm">
+                <option value="-">-</option>
+                <option value="=">=</option>
+            </select>
+        </div>
+        <div class="mb-2 d-flex gap-2">
+            <button id="addDivider" class="btn btn-sm btn-success flex-fill">Add Divider</button>
+            <button id="removeDivider" class="btn btn-sm btn-danger flex-fill">Remove Divider</button>
+        </div>
+        <div class="mb-2 d-flex gap-2">
+            <button id="saveLayout" class="btn btn-primary flex-fill">Save Layout</button>
+            <button id="resetLayout" class="btn btn-outline-danger flex-fill">Reset Default</button>
+        </div>
+        <div class="mb-1"><strong>Layers</strong></div>
+        <div id="layersList" class="list-box"></div>
+    </div>
+    <div class="preview-host">
+        <div id="receiptCanvas" class="box"></div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    (() => {
+        const initialModel = {{ dotmatrix_layout| tojson
+    }};
+    const initialConfig = {{ dotmatrix_layout_config| tojson }};
+    const canvas = document.getElementById('receiptCanvas');
+    const layersList = document.getElementById('layersList');
+    const selectedLabel = document.getElementById('selectedLabel');
+    let mode = 'line';
+    let selected = null;
+    let dragState = null;
+    let ghostLine = null;
+    const state = {
+        model: initialModel,
+        config: initialConfig,
+    };
+    const ROW_STEP = (initialModel && initialModel.metrics && initialModel.metrics.rowHeight) ? initialModel.metrics.rowHeight : 18;
+
+    function ensureLineAdj(id) {
+        if (!state.config.lineAdjustments[id]) state.config.lineAdjustments[id] = { x: 0, y: 0, enabled: true };
+        return state.config.lineAdjustments[id];
+    }
+    function ensureWordAdj(id) {
+        if (!state.config.wordAdjustments[id]) state.config.wordAdjustments[id] = { x: 0, y: 0, enabled: true };
+        return state.config.wordAdjustments[id];
+    }
+    function findLine(lineId) { return state.model.lines.find(x => x.lineId === lineId); }
+    function findWord(wordId) { return state.model.words.find(x => x.wordId === wordId); }
+
+    function renderLayersList() {
+        const rows = [];
+        const lineRows = state.model.lines.map(line => ({ type: 'line', id: line.lineId, label: `L${line.index}: ${line.text.slice(0, 28)}` }));
+        const dividerRows = (state.config.dividers || []).map((d, idx) => ({ type: 'divider', id: d.id, label: `D${idx}: ${d.char} @ (${d.x},${d.y})` }));
+        [...lineRows, ...dividerRows].forEach(row => {
+            const active = selected && selected.type === row.type && selected.id === row.id ? 'active' : '';
+            rows.push(`<div class="item-row ${active}" data-type="${row.type}" data-id="${row.id}">${row.label}</div>`);
+        });
+        layersList.innerHTML = rows.join('');
+    }
+
+    function renderCanvas() {
+        canvas.style.width = `${state.model.metrics.canvasWidth}px`;
+        canvas.style.height = `${state.model.metrics.canvasHeight}px`;
+        const lineEls = state.model.lines.map(line => `<div class="line ${selected && selected.type === 'line' && selected.id === line.lineId ? 'selected' : ''}" data-type="line" data-id="${line.lineId}" style="left:${line.x}px;top:${line.y}px;display:${line.enabled ? 'block' : 'none'}">${line.text}</div>`);
+        const wordEls = state.model.words.map(word => `<div class="word ${selected && selected.type === 'word' && selected.id === word.wordId ? 'selected' : ''}" data-type="word" data-id="${word.wordId}" style="left:${word.x}px;top:${word.y}px;display:${word.enabled ? 'block' : 'none'}">${word.text}</div>`);
+        const dividerEls = (state.config.dividers || []).map(d => `<div class="divider ${d.char === '=' ? 'eq' : ''} ${selected && selected.type === 'divider' && selected.id === d.id ? 'selected' : ''}" data-type="divider" data-id="${d.id}" style="left:${d.x}px;top:${d.y}px;width:${d.width}px;display:${d.enabled ? 'block' : 'none'}"></div>`);
+        const ghostEls = [];
+        if (ghostLine && ghostLine.changed) {
+            ghostEls.push(`<div class="line ghost" style="left:${ghostLine.x}px;top:${ghostLine.y}px;display:block">${ghostLine.text}</div>`);
+        }
+        canvas.innerHTML = [...lineEls, ...wordEls, ...dividerEls, ...ghostEls].join('');
+        renderLayersList();
+    }
+
+    function refreshModel() {
+        const lineWidth = state.model.metrics.lineWidthChars;
+        const rowHeight = state.model.metrics.rowHeight;
+        const charWidth = state.model.metrics.charWidth;
+        const contentWidth = state.model.metrics.contentWidth || (lineWidth * charWidth);
+        const defaultY = state.model.metrics.defaultY || 24;
+        const baseX = Math.round((state.model.metrics.canvasWidth - contentWidth) / 2);
+        state.model.lines.forEach((line, idx) => {
+            const adj = state.config.lineAdjustments[line.lineId] || { x: 0, y: 0, enabled: true };
+            line.x = baseX + (adj.x || 0);
+            line.y = defaultY + (idx * rowHeight) + (adj.y || 0);
+            if (line.y < 2) line.y = 2;
+            line.enabled = adj.enabled !== false;
+        });
+        state.model.words.forEach(word => {
+            const line = findLine(word.lineId);
+            if (!line) return;
+            const wadj = state.config.wordAdjustments[word.wordId] || { x: 0, y: 0, enabled: true };
+            word.x = line.x + (word.start * charWidth) + (wadj.x || 0);
+            word.y = line.y + (wadj.y || 0);
+            word.enabled = line.enabled && wadj.enabled !== false;
+        });
+        state.config.dividers = (state.config.dividers || []).map(d => ({
+            id: d.id, x: Number(d.x || baseX), y: Number(d.y || defaultY), width: Number(d.width || contentWidth), char: d.char === '=' ? '=' : '-', enabled: d.enabled !== false
+        }));
+        renderCanvas();
+    }
+
+    function captureGhostLineBeforeMove(lineId) {
+        const line = findLine(lineId);
+        if (!line) return;
+        ghostLine = { lineId: line.lineId, x: line.x, y: line.y, text: line.text, changed: false };
+    }
+
+    function selectItem(type, id) {
+        selected = { type, id };
+        if (type !== 'line') ghostLine = null;
+        selectedLabel.value = `${type}:${id}`;
+        renderCanvas();
+    }
+
+    document.getElementById('modeLine').addEventListener('click', () => { mode = 'line'; document.getElementById('modeLine').className = 'btn btn-sm btn-primary'; document.getElementById('modeWord').className = 'btn btn-sm btn-outline-primary'; });
+    document.getElementById('modeWord').addEventListener('click', () => { mode = 'word'; document.getElementById('modeWord').className = 'btn btn-sm btn-primary'; document.getElementById('modeLine').className = 'btn btn-sm btn-outline-primary'; });
+
+    layersList.addEventListener('click', (e) => {
+        const row = e.target.closest('.item-row');
+        if (!row) return;
+        selectItem(row.dataset.type, row.dataset.id);
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        const target = e.target.closest('.line,.word,.divider');
+        if (!target) return;
+        const type = target.dataset.type;
+        if ((mode === 'line' && type === 'word') || (mode === 'word' && type === 'line')) return;
+        selectItem(type, target.dataset.id);
+        if (type === 'line') captureGhostLineBeforeMove(target.dataset.id);
+        dragState = { startX: e.clientX, startY: e.clientY };
+    });
+    window.addEventListener('mousemove', (e) => {
+        if (!dragState || !selected) return;
+        const dx = Math.round(e.clientX - dragState.startX);
+        const rawDy = e.clientY - dragState.startY;
+        const dy = Math.round(rawDy / ROW_STEP) * ROW_STEP;
+        dragState.startX = e.clientX;
+        if (dy !== 0) {
+            dragState.startY += dy;
+        }
+        if (selected.type === 'line') {
+            const adj = ensureLineAdj(selected.id); adj.x += dx; adj.y += dy;
+            if (ghostLine && ghostLine.lineId === selected.id) ghostLine.changed = true;
+        } else if (selected.type === 'word') {
+            const adj = ensureWordAdj(selected.id); adj.x += dx; adj.y += dy;
+        } else if (selected.type === 'divider') {
+            const divider = (state.config.dividers || []).find(d => d.id === selected.id);
+            if (divider) { divider.x += dx; divider.y += dy; }
+        }
+        refreshModel();
+    });
+    window.addEventListener('mouseup', () => { dragState = null; });
+
+    document.querySelectorAll('[data-nudge]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!selected) return;
+            const [dx, rawDy] = btn.dataset.nudge.split(',').map(Number);
+            const dy = rawDy === 0 ? 0 : (rawDy > 0 ? ROW_STEP : -ROW_STEP);
+            if (selected.type === 'line' && (!ghostLine || ghostLine.lineId !== selected.id)) captureGhostLineBeforeMove(selected.id);
+            if (selected.type === 'line') { const adj = ensureLineAdj(selected.id); adj.x += dx; adj.y += dy; }
+            if (selected.type === 'line' && ghostLine && ghostLine.lineId === selected.id && (dx !== 0 || dy !== 0)) ghostLine.changed = true;
+            if (selected.type === 'word') { const adj = ensureWordAdj(selected.id); adj.x += dx; adj.y += dy; }
+            if (selected.type === 'divider') {
+                const divider = (state.config.dividers || []).find(d => d.id === selected.id);
+                if (divider) { divider.x += dx; divider.y += dy; }
+            }
+            refreshModel();
+        });
+    });
+
+    document.getElementById('toggleEnabled').addEventListener('click', () => {
+        if (!selected) return;
+        if (selected.type === 'line') {
+            const adj = ensureLineAdj(selected.id); adj.enabled = !(adj.enabled !== false);
+        } else if (selected.type === 'word') {
+            const adj = ensureWordAdj(selected.id); adj.enabled = !(adj.enabled !== false);
+        } else {
+            const divider = (state.config.dividers || []).find(d => d.id === selected.id);
+            if (divider) divider.enabled = !divider.enabled;
+        }
+        refreshModel();
+    });
+
+    document.getElementById('addDivider').addEventListener('click', () => {
+        const char = document.getElementById('dividerChar').value;
+        const id = `div-${Date.now()}`;
+        const contentWidth = state.model.metrics.contentWidth || (state.model.metrics.lineWidthChars * state.model.metrics.charWidth);
+        const baseX = Math.round((state.model.metrics.canvasWidth - contentWidth) / 2);
+        const baseY = state.model.metrics.defaultY || 24;
+        state.config.dividers.push({ id, x: baseX, y: baseY, width: contentWidth, char, enabled: true });
+        selectItem('divider', id);
+        refreshModel();
+    });
+    document.getElementById('removeDivider').addEventListener('click', () => {
+        if (!selected || selected.type !== 'divider') return;
+        state.config.dividers = state.config.dividers.filter(d => d.id !== selected.id);
+        selected = null;
+        selectedLabel.value = '';
+        refreshModel();
+    });
+
+    document.getElementById('saveLayout').addEventListener('click', async () => {
+        const res = await fetch("{{ url_for('settings.dotmatrix_layout_config_save') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(state.config)
+        });
+        if (res.ok) window.location.reload();
+    });
+
+    document.getElementById('resetLayout').addEventListener('click', () => {
+        state.config = { version: 1, lineAdjustments: {}, wordAdjustments: {}, dividers: [] };
+        selected = null;
+        ghostLine = null;
+        selectedLabel.value = '';
+        refreshModel();
+    });
+
+    refreshModel();
+}) ();
+</script>
+{% endblock %}

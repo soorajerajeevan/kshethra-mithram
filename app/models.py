@@ -57,7 +57,7 @@ class Devotee(db.Model):
     # Relationships
     bills = db.relationship('Bill', backref='devotee', lazy='dynamic')
     bookings = db.relationship('PoojaBooking', backref='devotee', lazy='dynamic')
-    family_members = db.relationship('FamilyMember', backref='devotee', lazy='dynamic')
+    family_members = db.relationship('FamilyMember', backref='devotee')
 
     def to_dict(self):
         return {

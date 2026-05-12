@@ -1,10 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Devotee, Bill
+from app.models import Devotee, Bill, FamilyMember
 from datetime import datetime
 import re
-import json
 
 from app.routes.billing import MALAYALAM_NAKSHATHRAS
 
@@ -21,6 +20,24 @@ def generate_devotee_id():
             max_num = max(max_num, int(match.group(1)))
     new_num = max_num + 1 if max_num > 0 else 1
     return f'DEV-{new_num:05d}'
+
+
+def _get_family_members_from_form(form):
+    """Extract valid family members from repeated form fields."""
+    names = form.getlist('family_member_name[]')
+    nakshathrams = form.getlist('family_member_nakshathram[]')
+    members = []
+
+    for idx, raw_name in enumerate(names):
+        name = (raw_name or '').strip()
+        nakshathram = (nakshathrams[idx] if idx < len(nakshathrams) else '').strip()
+        if name:
+            members.append({
+                'name': name,
+                'nakshathram': nakshathram
+            })
+
+    return members
 
 
 
@@ -62,17 +79,26 @@ def add():
             phone=request.form.get('phone'),
             email=request.form.get('email'),
             address=request.form.get('address'),
-            gotra=request.form.get('gotra'),
-            family_members=request.form.get('family_members')
+            gotra=request.form.get('gotra')
         )
-        
+
         db.session.add(devotee)
+        db.session.flush()
+
+        family_members = _get_family_members_from_form(request.form)
+        for member in family_members:
+            db.session.add(FamilyMember(
+                devotee_id=devotee.id,
+                name=member['name'],
+                nakshathram=member['nakshathram']
+            ))
+
         db.session.commit()
         
         flash(f'Devotee {devotee.devotee_id} added successfully!', 'success')
         return redirect(url_for('devotees.view', id=devotee.id))
     
-    return render_template('devotees/add.html')
+    return render_template('devotees/add.html', family_members=[])
 
 
 @bp.route('/<int:id>')
@@ -108,26 +134,27 @@ def edit(id):
         devotee.address = request.form.get('address')
         devotee.gotra = request.form.get('gotra')
         devotee.updated_at = datetime.utcnow()
-        
+
+        family_members = _get_family_members_from_form(request.form)
+
+        FamilyMember.query.filter_by(devotee_id=devotee.id).delete(synchronize_session=False)
+        for member in family_members:
+            db.session.add(FamilyMember(
+                devotee_id=devotee.id,
+                name=member['name'],
+                nakshathram=member['nakshathram']
+            ))
+
         db.session.commit()
-        db.flush()
-        
-        #Update family members in db, if any changes, create a new record in family members table with the updated details and link it to the devotee if not exist. 
-        # family member is in format [{name: '', nakshathram: '' }]
-        family_members = request.form.get('family_members')
-        if family_members:
-            try:
-                family_members = json.loads(family_members)
-                devotee.family_members = family_members
-                db.session.commit()
-            except Exception as e:
-                flash('Error updating family members: ' + str(e), 'danger')
-                return redirect(url_for('devotees.edit', id=devotee.id))
-        
+
         flash('Devotee updated successfully!', 'success')
         return redirect(url_for('devotees.view', id=devotee.id))
     
-    return render_template('devotees/edit.html', devotee=devotee)
+    return render_template(
+        'devotees/edit.html',
+        devotee=devotee,
+        family_members=[member.to_dict() for member in devotee.family_members]
+    )
 
 
 @bp.route('/<int:id>/delete', methods=['POST'])

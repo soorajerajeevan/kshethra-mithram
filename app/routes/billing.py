@@ -6,6 +6,7 @@ from datetime import datetime
 import re
 import json
 import uuid
+from app.utils.dotmatrix_layout import build_receipt_lines, compute_layout_model, normalize_layout_config
 # from weasyprint import HTML
 import io
 
@@ -553,7 +554,7 @@ def billing_form_data():
             "address": d.address or '',
             'phone': d.phone or '',
             'nakshatra': d.nakshatra or '',
-            'family_members': [member.to_dict() for member in d.family_members.all()] or [],
+            'family_members': [member.to_dict() for member in d.family_members] or [],
         }
         for d in devotees
     ]
@@ -645,18 +646,27 @@ def print_receipt(id):
     temple_phone = temple_phone.value if temple_phone else '+91 1234567890'
     receipt_footer = receipt_footer.value if receipt_footer else 'May the divine bless you!'
     
+    layout_setting = TempleSettings.query.filter_by(key='dotmatrix6_layout_config').first()
+    layout_config = normalize_layout_config(layout_setting.value if layout_setting else None)
+
     # Select appropriate template based on printer type
     if printer_type == 'dotmatrix6':
         template = 'billing/receipt_dotmatrix6.html'
+        receipt_lines = build_receipt_lines(bill, temple_name, temple_address, temple_phone, receipt_footer)
+        layout_model = compute_layout_model(receipt_lines, layout_config)
     else:
         template = 'billing/receipt.html'
+        layout_model = None
+        layout_config = None
     
     html_content = render_template(template,
                                    bill=bill,
                                    temple_name=temple_name,
                                    temple_address=temple_address,
                                    temple_phone=temple_phone,
-                                   receipt_footer=receipt_footer)
+                                   receipt_footer=receipt_footer,
+                                   dotmatrix_layout=layout_model,
+                                   dotmatrix_layout_config=layout_config)
     
     return html_content
 
