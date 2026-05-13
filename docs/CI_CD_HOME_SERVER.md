@@ -32,9 +32,9 @@ Use either:
 As `templedeploy`:
 
 ```bash
-sudo -u templedeploy -H bash -lc '
+sudo -u templedeploy -H bash -lc
 cd /opt/kshethra-mithram
-git clone <repo-url> .
+git clone https://github.com/soorajerajeevan/kshethra-mithram.git .
 chmod +x deploy/scripts/deploy_on_server.sh
 '
 ```
@@ -71,6 +71,11 @@ sudo ufw default deny incoming
 sudo ufw default allow outgoing
 # Optionally allow LAN-only SSH, adjust subnet:
 sudo ufw allow from 192.168.0.0/16 to any port 22 proto tcp
+# Allow SSH via Tailscale interface
+sudo ufw allow in on tailscale0 to any port 22 proto tcp
+# (Optional) Also allow from Tailnet CGNAT range
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp
+
 sudo ufw enable
 sudo ufw status verbose
 ```
