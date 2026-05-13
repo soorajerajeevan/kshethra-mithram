@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Kshethra Mithram deploy poll every 2 minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=2min
+AccuracySec=30s
+Persistent=true
+Unit=kshethra-mithram-deploy.service
+
+[Install]
+WantedBy=timers.target

@@ -19,7 +19,7 @@ docker build -t temple-app:latest .
 
 **Using docker-compose (recommended):**
 ```bash
- 
+ docker compose up -d
 ```
 
 **Using docker directly:**
