@@ -9,6 +9,31 @@ HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:5000}"
 HEALTH_RETRIES="${HEALTH_RETRIES:-8}"
 HEALTH_SLEEP_SECONDS="${HEALTH_SLEEP_SECONDS:-5}"
 
+fail() {
+  echo "ERROR: $*"
+  exit 1
+}
+
+assert_writable_path() {
+  local path="$1"
+  local reason="$2"
+  [[ -e "${path}" ]] || fail "Missing path: ${path} (${reason})"
+  [[ -w "${path}" ]] || fail "Not writable: ${path} (${reason}). Fix ownership: sudo chown -R templedeploy:templedeploy ${APP_DIR}"
+}
+
+preflight_git_permissions() {
+  [[ -d .git ]] || fail "Not a git repository: ${APP_DIR}"
+
+  # git fetch writes here; fail early with actionable guidance.
+  assert_writable_path ".git" "git metadata root"
+  assert_writable_path ".git/objects" "git object storage"
+  mkdir -p ".git/objects/pack"
+  assert_writable_path ".git/objects/pack" "git pack storage"
+
+  [[ -e ".git/index" ]] && assert_writable_path ".git/index" "git index"
+  touch ".git/FETCH_HEAD" 2>/dev/null || fail "Cannot write .git/FETCH_HEAD. Fix ownership: sudo chown -R templedeploy:templedeploy ${APP_DIR}"
+}
+
 mkdir -p "${STATE_DIR}"
 mkdir -p "$(dirname "${LOCK_FILE}")"
 
@@ -21,6 +46,7 @@ fi
 echo "Starting pull-based deploy for branch=${BRANCH}"
 
 cd "${APP_DIR}"
+preflight_git_permissions()
 
 git fetch --prune origin "${BRANCH}"
 TARGET_COMMIT="$(git rev-parse "origin/${BRANCH}")"

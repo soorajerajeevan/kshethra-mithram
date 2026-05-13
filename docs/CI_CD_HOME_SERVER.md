@@ -32,7 +32,7 @@ Use either:
 As `templedeploy`:
 
 ```bash
-sudo -u templedeploy -H bash -lc
+sudo -u templedeploy -H bash -lc '
 cd /opt/kshethra-mithram
 git clone https://github.com/soorajerajeevan/kshethra-mithram.git .
 chmod +x deploy/scripts/deploy_on_server.sh
@@ -86,7 +86,7 @@ Base version is read from `VERSION` (example: `0.1.0`).
 
 On server deploy:
 - `python3 deploy/scripts/compute_version.py --mode deploy --commit-sha <sha>`
-- Generates: `0.1.0.post<unix_timestamp>+g<short_sha>`
+- Generates: `0.1.0.post<unix_timestamp>+<short_sha>`
 
 This is passed as Docker `BUILD_VERSION`, then written to `/app/.build-version` in container.
 
@@ -131,3 +131,32 @@ Health failure simulation:
 1. Temporarily set `HEALTH_URL` to an invalid endpoint in service file.
 2. Run one deploy, verify rollback.
 3. Restore service config and redeploy.
+
+## 10) Permission drift recovery (git fetch fails)
+
+If journald shows:
+- `insufficient permission for adding an object to repository database`
+- `fatal: unpack-objects failed`
+
+run:
+
+```bash
+sudo systemctl stop kshethra-mithram-deploy.timer
+sudo systemctl stop kshethra-mithram-deploy.service
+
+sudo chown -R templedeploy:templedeploy /opt/kshethra-mithram
+sudo chmod 755 /opt /opt/kshethra-mithram /opt/kshethra-mithram/deploy /opt/kshethra-mithram/deploy/scripts
+sudo chmod 755 /opt/kshethra-mithram/deploy/scripts/deploy_on_server.sh
+
+sudo -u templedeploy -H bash -lc '
+cd /opt/kshethra-mithram
+git config --global --add safe.directory /opt/kshethra-mithram
+git fetch --prune origin main
+/opt/kshethra-mithram/deploy/scripts/deploy_on_server.sh
+'
+
+sudo systemctl start kshethra-mithram-deploy.timer
+```
+
+Operational rule:
+- Never run `git` inside `/opt/kshethra-mithram` as `root` (`sudo git ...`).

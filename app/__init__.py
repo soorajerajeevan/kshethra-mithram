@@ -12,6 +12,17 @@ migrate = Migrate()
 login_manager = LoginManager()
 babel = Babel()
 
+def get_temple_name_from_db(default_name: str) -> str:
+    """Fetch temple_name from TempleSettings with safe fallback."""
+    try:
+        from app.models import TempleSettings
+        setting = TempleSettings.query.filter_by(key='temple_name').first()
+        if setting and setting.value:
+            return setting.value
+    except Exception:
+        pass
+    return default_name
+
 
 def create_app(config_name='development'):
     """Application factory pattern"""
@@ -56,6 +67,8 @@ def create_app(config_name='development'):
     def inject_template_globals():
         version_file = os.environ.get('APP_VERSION_FILE', '/app/.build-version')
         app_version = os.environ.get('APP_VERSION', '').strip()
+        default_temple_name = app.config.get('TEMPLE_NAME', 'Temple Management System')
+        temple_name = get_temple_name_from_db(default_temple_name)
         if not app_version:
             try:
                 with open(version_file, 'r', encoding='utf-8') as handle:
@@ -64,7 +77,8 @@ def create_app(config_name='development'):
                 app_version = 'dev'
         return {
             'locale': request.accept_languages.best_match(app.config['LANGUAGES']) or 'en',
-            'app_version': app_version
+            'app_version': app_version,
+            'temple_name': temple_name
         }
     
     return app
