@@ -7,7 +7,7 @@ COPY package*.json ./
 COPY webpack.config.js ./
 COPY assets ./assets
 
-RUN npm install && npm run build
+RUN npm ci && npm run build
 
 # Stage 2: Python runtime
 FROM python:3.11-slim

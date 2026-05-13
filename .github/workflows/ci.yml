@@ -19,32 +19,32 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
+          cache: "pip"
+          cache-dependency-path: requirements.txt
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Install frontend dependencies
-        run: npm ci
-
-      - name: Build frontend assets
-        run: npm run build
-
       - name: Generate app version
         run: |
           APP_VERSION="$(python deploy/scripts/compute_version.py)"
           echo "APP_VERSION=${APP_VERSION}" >> "$GITHUB_ENV"
 
-      - name: Build Docker image
-        run: |
-          docker build --build-arg BUILD_VERSION="${APP_VERSION}" -t kshethra-mithram:${APP_VERSION} .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (cached)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: kshethra-mithram:${{ env.APP_VERSION }}
+          build-args: |
+            BUILD_VERSION=${{ env.APP_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Smoke test import
         run: python -c "from app import create_app; create_app(); print('ok')"
