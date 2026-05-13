@@ -165,7 +165,7 @@ function initPoojaRowSearchables(index) {
         placeholder: 'Nakshathram',
         create: false,
         onChange: function () {
-            updateStarForFamilyMembers(index);
+            // updateStarForFamilyMembers(index);
         }
     });
 
