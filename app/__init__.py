@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_babel import Babel
 from config import config
+import os
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -52,8 +53,19 @@ def create_app(config_name='development'):
     
     # Setup locale selector
     @app.context_processor
-    def inject_locale():
-        return {'locale': request.accept_languages.best_match(app.config['LANGUAGES']) or 'en'}
+    def inject_template_globals():
+        version_file = os.environ.get('APP_VERSION_FILE', '/app/.build-version')
+        app_version = os.environ.get('APP_VERSION', '').strip()
+        if not app_version:
+            try:
+                with open(version_file, 'r', encoding='utf-8') as handle:
+                    app_version = handle.read().strip()
+            except OSError:
+                app_version = 'dev'
+        return {
+            'locale': request.accept_languages.best_match(app.config['LANGUAGES']) or 'en',
+            'app_version': app_version
+        }
     
     return app
 

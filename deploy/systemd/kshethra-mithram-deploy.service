@@ -1,0 +1,18 @@
+[Unit]
+Description=Kshethra Mithram Pull-Based Deploy
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=templedeploy
+Group=templedeploy
+WorkingDirectory=/opt/kshethra-mithram
+Environment=BRANCH=main
+Environment=HEALTH_URL=http://127.0.0.1:5000
+ExecStart=/opt/kshethra-mithram/deploy/scripts/deploy_on_server.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

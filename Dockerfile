@@ -16,9 +16,11 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     FLASK_APP=run.py \
-    FLASK_ENV=production
+    FLASK_ENV=production \
+    APP_VERSION_FILE=/app/.build-version
 
 WORKDIR /app
+ARG BUILD_VERSION
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
@@ -33,6 +35,9 @@ COPY . .
 
 # Copy built frontend assets from builder stage
 COPY --from=frontend-builder /build/app/static/dist ./app/static/dist
+
+RUN BUILD_TAG="${BUILD_VERSION:-$(date -u +%Y.%m.%d-%H%M%S)}" && \
+    echo "${BUILD_TAG}" > /app/.build-version
 
 RUN mkdir -p /database /app/app/static/uploads /app/logs
 

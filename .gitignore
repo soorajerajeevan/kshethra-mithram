@@ -229,3 +229,11 @@ yarn-error.log*
 .claude
 .ralph
 .streb
+.mcp.json
+CLAUDE.local.md.template
+CLAUDE.md
+toolchain.yaml
+.claude/settings.local.json
+patterns/gev.md
+patterns/ralph-wiggum.md
+.claude/settings.local.json
