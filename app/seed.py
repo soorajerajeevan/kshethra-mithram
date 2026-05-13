@@ -1,38 +1,7 @@
 from app import db
-from app.models import (User, Devotee, PoojaService, InventoryItem, Priest, TempleSettings)
+from app.models import (FamilyMember, User, Devotee, PoojaService, InventoryItem, Priest, TempleSettings)
 from datetime import datetime
 import json
-
-
-MALAYALAM_NAKSHATHRAS = [
-    "01 അശ്വതി",
-    "02 ഭരണി",
-    "03 കാർത്തിക",
-    "04 രോഹിണി",
-    "05 മകയിരം",
-    "06 തിരുവാതിര",
-    "07 പുണർതം",
-    "08 പൂയം",
-    "09 ആയില്യം",
-    "10 മകം",
-    "11 പൂരം",
-    "12 ഉത്രം",
-    "13 അത്തം",
-    "14 ചിത്തിര",
-    "15 ചോതി",
-    "16 വിശാഖം",
-    "17 അനിഴം",
-    "18 തൃക്കേട്ട",
-    "19 മൂലം",
-    "20 പൂരാടം",
-    "21 ഉത്രാടം",
-    "22 തിരുവോണം",
-    "23 അവിട്ടം",
-    "24 ചതയം",
-    "25 പൂരുരുട്ടാതി",
-    "26 ഉത്രട്ടാതി",
-    "27 രേവതി",
-]
 
 
 def seed_all():
@@ -155,7 +124,6 @@ def seed_all():
     for english_name, malayalam_name, rate_rupees in poojas_data:
         if not PoojaService.query.filter_by(english_name=english_name).first():
             pooja = PoojaService(
-                name=malayalam_name,
                 english_name=english_name,
                 malayalam_name=malayalam_name,
                 category='Special Pooja',
@@ -163,7 +131,7 @@ def seed_all():
                 default_price=int(rate_rupees),
                 duration_minutes=30,
                 max_bookings_per_day=50,
-                add_to_booking=False
+                add_to_booking=True
             )
             db.session.add(pooja)
     
@@ -210,45 +178,16 @@ def seed_all():
     devotees_data = [
         (
             'Sooraj ER',
-            MALAYALAM_NAKSHATHRAS[0],
-            '+91 9876543210',
-            'ramesh@email.com',
-            'MG Road, City',
-            'Bharadwaja',
-            json.dumps([
-                {'name': 'Geethu', 'nakshathram': MALAYALAM_NAKSHATHRAS[3]},
-                {'name': 'Sulochana', 'nakshathram': MALAYALAM_NAKSHATHRAS[7]},
-            ], ensure_ascii=False)
-        ),
-        (
-            'Suresh Patel',
-            MALAYALAM_NAKSHATHRAS[3],
-            '+91 9876543211',
-            'suresh@email.com',
-            'Temple Street, City',
-            'Kashyapa',
-            json.dumps([
-                {'name': 'Radha', 'nakshathram': MALAYALAM_NAKSHATHRAS[5]},
-                {'name': 'Priya', 'nakshathram': MALAYALAM_NAKSHATHRAS[10]},
-            ], ensure_ascii=False)
-        ),
-        (
-            'Venkatesh Rao',
-            MALAYALAM_NAKSHATHRAS[7],
-            '+91 9876543212',
-            'venkat@email.com',
-            'Main Road, City',
-            'Vishwamitra',
-            json.dumps([
-                {'name': 'Saraswati', 'nakshathram': MALAYALAM_NAKSHATHRAS[12]},
-                {'name': 'Karthik', 'nakshathram': MALAYALAM_NAKSHATHRAS[14]},
-                {'name': 'Divya', 'nakshathram': MALAYALAM_NAKSHATHRAS[26]},
-            ], ensure_ascii=False)
+            'ഉത്രാടം',
+            '+91 9746199209',
+            'sooraj@email.com',
+            'Edattu, Varapptty',
+            'VPTY'
         )
     ]
     
     devotee_id_start = 1
-    for name, nakshatra, phone, email, address, gotra, family in devotees_data:
+    for name, nakshatra, phone, email, address, gotra in devotees_data:
         if not Devotee.query.filter_by(phone=phone).first():
             devotee = Devotee(
                 devotee_id=f'DEV-{devotee_id_start:05d}',
@@ -257,11 +196,25 @@ def seed_all():
                 phone=phone,
                 email=email,
                 address=address,
-                gotra=gotra,
-                family_members=family
+                gotra=gotra
             )
             db.session.add(devotee)
             devotee_id_start += 1
+            
+    # Create sample family members for the first devotee
+    first_devotee = Devotee.query.first()
+    if first_devotee:
+        family_members = [
+            ('Geethu', 'തൃക്കേട്ട'),
+            ('Sulochana', 'ഉത്രം')
+        ]
+        for name, nakshatra in family_members:
+            member = FamilyMember(
+                devotee_id=first_devotee.id,
+                name=name,
+                nakshathram=nakshatra
+            )
+            db.session.add(member)
     
     print("✓ Sample devotees created")
     

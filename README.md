@@ -423,7 +423,7 @@ python run.py init_db
 
 **Reset database**
 ```bash
-rm temple_dev.db
+rm database/temple_dev.db
 python run.py init_db
 python run.py seed_data
 ```

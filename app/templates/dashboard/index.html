@@ -143,7 +143,7 @@
                                 <tbody>
                                     {% for booking in pending_bookings %}
                                     <tr>
-                                        <td>{{ booking.devotee.full_name }}</td>
+                                        <td>{{ booking.member_name }} ({{ booking.member_nakshathram }})</td>
                                         <td>{{ booking.service.malayalam_name or booking.service.name }}</td>
                                         <td>{{ booking.quantity }}</td>
                                         <td>
@@ -191,7 +191,7 @@
                                     {% for booking in upcoming_bookings %}
                                     <tr>
                                         <td>{{ booking.scheduled_date|format_date }}</td>
-                                        <td>{{ booking.devotee.full_name }}</td>
+                                        <td>{{ booking.member_name }} ({{ booking.member_nakshathram }})</td>
                                         <td>{{ booking.service.malayalam_name or booking.service.name }}</td>
                                         <td>{{ booking.quantity }}</td>
                                     </tr>

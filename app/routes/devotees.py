@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Devotee, Bill
+from app.models import Devotee, Bill, FamilyMember
 from datetime import datetime
 import re
-import json
+
+from app.routes.billing import MALAYALAM_NAKSHATHRAS
 
 bp = Blueprint('devotees', __name__, url_prefix='/devotees')
 
@@ -21,72 +22,23 @@ def generate_devotee_id():
     return f'DEV-{new_num:05d}'
 
 
-def parse_family_members(raw_value):
+def _get_family_members_from_form(form):
+    """Extract valid family members from repeated form fields."""
+    names = form.getlist('family_member_name[]')
+    nakshathrams = form.getlist('family_member_nakshathram[]')
     members = []
-    text = (raw_value or '').strip()
-    if not text:
-        return members
 
-    # JSON format: [{"name":"...","nakshathram":"..."}]
-    try:
-        data = json.loads(text)
-        if isinstance(data, list):
-            for item in data:
-                if isinstance(item, dict):
-                    name = (item.get('name') or '').strip()
-                    nak = (item.get('nakshathram') or '').strip()
-                    if name:
-                        members.append({'name': name, 'nakshathram': nak})
-            if members:
-                return members
-    except Exception:
-        pass
-
-    # Multiline plain text format: Name | Nakshathram
-    for line in text.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        if '|' in line:
-            name, nak = line.split('|', 1)
-            name = name.strip()
-            nak = nak.strip()
-        else:
-            name, nak = line, ''
+    for idx, raw_name in enumerate(names):
+        name = (raw_name or '').strip()
+        nakshathram = (nakshathrams[idx] if idx < len(nakshathrams) else '').strip()
         if name:
-            members.append({'name': name, 'nakshathram': nak})
+            members.append({
+                'name': name,
+                'nakshathram': nakshathram
+            })
 
-    if members:
-        return members
+    return members
 
-    # Legacy comma format fallback
-    return [{'name': x.strip(), 'nakshathram': ''} for x in text.split(',') if x.strip()]
-
-
-def dump_family_members(members):
-    cleaned = []
-    seen = set()
-    for item in members:
-        name = (item.get('name') or '').strip()
-        nak = (item.get('nakshathram') or '').strip()
-        if not name:
-            continue
-        key = name.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        cleaned.append({'name': name, 'nakshathram': nak})
-    return json.dumps(cleaned, ensure_ascii=False)
-
-
-def family_members_to_text(members):
-    lines = []
-    for item in members:
-        if item.get('nakshathram'):
-            lines.append(f"{item['name']} | {item['nakshathram']}")
-        else:
-            lines.append(item['name'])
-    return "\n".join(lines)
 
 
 @bp.route('/')
@@ -120,7 +72,6 @@ def list():
 def add():
     """Add new devotee"""
     if request.method == 'POST':
-        family_members = parse_family_members(request.form.get('family_members'))
         devotee = Devotee(
             devotee_id=generate_devotee_id(),
             full_name=request.form.get('full_name'),
@@ -128,17 +79,26 @@ def add():
             phone=request.form.get('phone'),
             email=request.form.get('email'),
             address=request.form.get('address'),
-            gotra=request.form.get('gotra'),
-            family_members=dump_family_members(family_members)
+            gotra=request.form.get('gotra')
         )
-        
+
         db.session.add(devotee)
+        db.session.flush()
+
+        family_members = _get_family_members_from_form(request.form)
+        for member in family_members:
+            db.session.add(FamilyMember(
+                devotee_id=devotee.id,
+                name=member['name'],
+                nakshathram=member['nakshathram']
+            ))
+
         db.session.commit()
         
         flash(f'Devotee {devotee.devotee_id} added successfully!', 'success')
         return redirect(url_for('devotees.view', id=devotee.id))
     
-    return render_template('devotees/add.html')
+    return render_template('devotees/add.html', family_members=[])
 
 
 @bp.route('/<int:id>')
@@ -149,18 +109,15 @@ def view(id):
     
     # Get billing history
     bills = Bill.query.filter_by(
-        devotee_id=devotee.id,
-        is_active=True
+        devotee_id=devotee.id
     ).order_by(Bill.bill_date.desc()).limit(20).all()
     
     total_spent = sum(bill.grand_total for bill in devotee.bills.filter_by(is_active=True).all())
     
-    family_members = parse_family_members(devotee.family_members)
     return render_template('devotees/view.html', 
                          devotee=devotee, 
                          bills=bills,
-                         total_spent=total_spent,
-                         family_members=family_members)
+                         total_spent=total_spent)
 
 
 @bp.route('/<int:id>/edit', methods=['GET', 'POST'])
@@ -176,16 +133,28 @@ def edit(id):
         devotee.email = request.form.get('email')
         devotee.address = request.form.get('address')
         devotee.gotra = request.form.get('gotra')
-        devotee.family_members = dump_family_members(parse_family_members(request.form.get('family_members')))
         devotee.updated_at = datetime.utcnow()
-        
+
+        family_members = _get_family_members_from_form(request.form)
+
+        FamilyMember.query.filter_by(devotee_id=devotee.id).delete(synchronize_session=False)
+        for member in family_members:
+            db.session.add(FamilyMember(
+                devotee_id=devotee.id,
+                name=member['name'],
+                nakshathram=member['nakshathram']
+            ))
+
         db.session.commit()
-        
+
         flash('Devotee updated successfully!', 'success')
         return redirect(url_for('devotees.view', id=devotee.id))
     
-    family_members_text = family_members_to_text(parse_family_members(devotee.family_members))
-    return render_template('devotees/edit.html', devotee=devotee, family_members_text=family_members_text)
+    return render_template(
+        'devotees/edit.html',
+        devotee=devotee,
+        family_members=[member.to_dict() for member in devotee.family_members]
+    )
 
 
 @bp.route('/<int:id>/delete', methods=['POST'])
@@ -232,3 +201,17 @@ def search_api():
     } for d in devotees]
     
     return jsonify(results)
+
+
+@bp.route('/nakshatra', methods=['GET'])
+@login_required
+def nakshatra_api():
+    """API endpoint to get all nakshatras (for searchable select)"""
+    nakshatras = [{
+        'id': n['id'],
+        'english_name': n['english_name'],
+        'malayalam_name': n['malayalam_name'],
+        'display_name': f"{n['english_name']} ({n['malayalam_name']})"
+    } for n in MALAYALAM_NAKSHATHRAS]
+    
+    return jsonify(nakshatras)

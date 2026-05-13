@@ -1,56 +1,34 @@
 {% extends "base.html" %}
+
 {% block title %}Pooja Services{% endblock %}
+
+{% block extra_css %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/service-list.css') }}">
+
+{% endblock %}
 {% block content %}
 <div class="row mb-3">
-    <div class="col-md-6"><h2><i class="bi bi-calendar-event"></i> Pooja Services</h2></div>
+    <div class="col-md-6">
+        <h2><i class="bi bi-calendar-event"></i> Pooja Services</h2>
+    </div>
     <div class="col-md-6 text-end">
+        <button id="updateChangesBtn" class="btn btn-primary me-2" disabled>
+            <i class="bi bi-check-circle"></i> Update Changes
+        </button>
         <a href="{{ url_for('poojas.services_add') }}" class="btn btn-primary">
-            <i class="bi bi-plus"></i> Add Service
+            <i class="bi bi-plus"></i> Add Service (Full Form)
         </a>
     </div>
 </div>
 <div class="card">
     <div class="card-body">
-        <form method="GET" class="row g-2 mb-3">
-            <div class="col-md-6">
-                <input type="text" class="form-control" name="search" value="{{ search or '' }}" placeholder="Search by English name">
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-outline-primary">Search</button>
-            </div>
-        </form>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Malayalam Name</th>
-                    <th>English Name</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Duration</th>
-                    <th>Show In Booking</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for service in services %}
-                <tr>
-                    <td>{{ service.malayalam_name or service.name }}</td>
-                    <td>{{ service.english_name or '-' }}</td>
-                    <td><span class="badge bg-info">{{ service.category }}</span></td>
-                    <td>{{ service.default_price|currency }}</td>
-                    <td>{{ service.duration_minutes }} min</td>
-                    <td>
-                        <span class="badge bg-{{ 'success' if service.add_to_booking else 'secondary' }}">
-                            {{ 'Yes' if service.add_to_booking else 'No' }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="{{ url_for('poojas.services_edit', id=service.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div id="serviceGrid" class="ag-theme-quartz"></div>
     </div>
 </div>
+
+{% endblock %}
+{% block extra_js %}
+<script type="module" src="{{ url_for('static',filename='js/pages/service-list.js') }}">
+</script>
 {% endblock %}

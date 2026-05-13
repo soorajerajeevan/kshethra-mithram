@@ -109,7 +109,6 @@
 </head>
 <body>
     <div class="header">
-        <div class="om-symbol">🕉️</div>
         <div class="temple-name">{{ temple_name }}</div>
         <div class="temple-details">{{ temple_address }}</div>
         <div class="temple-details">Phone: {{ temple_phone }}</div>
@@ -119,7 +118,6 @@
         <div><strong>Bill No:</strong> {{ bill.bill_number }}</div>
         <div><strong>Date:</strong> {{ bill.bill_date|format_datetime }}</div>
         <div><strong>Devotee:</strong> {{ bill.devotee.full_name }}</div>
-        <div><strong>ID:</strong> {{ bill.devotee.devotee_id }}</div>
         {% if bill.devotee.phone %}
         <div><strong>Phone:</strong> {{ bill.devotee.phone }}</div>
         {% endif %}
@@ -190,7 +188,7 @@
         <div style="margin: 10px 0;">{{ receipt_footer }}</div>
         <div style="margin-top: 10px; font-size: 9px;">
             Thank you for your visit!<br>
-            Software by Temple Management System
+            Software by SRJ Infosystem
         </div>
     </div>
     

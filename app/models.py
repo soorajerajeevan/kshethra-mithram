@@ -23,6 +23,16 @@ class User(UserMixin, db.Model):
     
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "full_name": self.full_name,
+            "role": self.role,
+            "is_active": self.is_active
+        }
     
     def __repr__(self):
         return f'<User {self.username}>'
@@ -40,7 +50,6 @@ class Devotee(db.Model):
     email = db.Column(db.String(120))
     address = db.Column(db.Text)
     gotra = db.Column(db.String(100))
-    family_members = db.Column(db.Text)  # JSON or comma-separated
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -48,17 +57,50 @@ class Devotee(db.Model):
     # Relationships
     bills = db.relationship('Bill', backref='devotee', lazy='dynamic')
     bookings = db.relationship('PoojaBooking', backref='devotee', lazy='dynamic')
+    family_members = db.relationship('FamilyMember', backref='devotee')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "devotee_id": self.devotee_id,
+            "full_name": self.full_name,
+            "nakshatra": self.nakshatra,
+            "phone": self.phone,
+            "email": self.email,
+            "address": self.address,
+            "gotra": self.gotra,
+            "family_members": [member.to_dict() for member in self.family_members],
+            "is_active": self.is_active
+        }
     
     def __repr__(self):
         return f'<Devotee {self.devotee_id} - {self.full_name}>'
 
+class FamilyMember(db.Model):
+    """Family members of a devotee for pooja bookings"""
+    __tablename__ = 'family_members'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    devotee_id = db.Column(db.Integer, db.ForeignKey('devotees.id'), nullable=False)
+    name = db.Column(db.String(150), nullable=False)
+    nakshathram = db.Column(db.String(50))
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "devotee_id": self.devotee_id,
+            "name": self.name,
+            "nakshathram": self.nakshathram
+        }
+    
+    def __repr__(self):
+        return f'<FamilyMember {self.name} ({self.nakshathram})>'
 
 class PoojaService(db.Model):
     """Pooja services master"""
     __tablename__ = 'pooja_services'
     
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False, index=True)  # legacy mirror (Malayalam display)
     english_name = db.Column(db.String(200), index=True)
     malayalam_name = db.Column(db.String(200), index=True)
     category = db.Column(db.String(100))  # Daily Archana, Special Pooja, Homam, Festival
@@ -76,7 +118,22 @@ class PoojaService(db.Model):
 
     @property
     def display_name(self):
-        return self.malayalam_name or self.name or self.english_name or ''
+        return self.malayalam_name or self.english_name or ''
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "english_name": self.english_name,
+            "malayalam_name": self.malayalam_name,
+            "display_name": self.display_name,
+            "category": self.category,
+            "description": self.description,
+            "default_price": self.default_price,
+            "duration_minutes": self.duration_minutes,
+            "max_bookings_per_day": self.max_bookings_per_day,
+            "add_to_booking": self.add_to_booking,
+            "is_active": self.is_active
+        }
     
     def __repr__(self):
         return f'<PoojaService {self.display_name}>'
@@ -92,6 +149,14 @@ class ServiceMaterial(db.Model):
     quantity_required = db.Column(db.Float, nullable=False)  # per pooja
     
     __table_args__ = (db.UniqueConstraint('service_id', 'inventory_id', name='_service_inventory_uc'),)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "service_id": self.service_id,
+            "inventory_id": self.inventory_id,
+            "quantity_required": self.quantity_required
+        }
 
 
 class InventoryItem(db.Model):
@@ -117,6 +182,21 @@ class InventoryItem(db.Model):
     @property
     def is_low_stock(self):
         return self.current_stock <= self.reorder_level
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "category": self.category,
+            "unit": self.unit,
+            "current_stock": self.current_stock,
+            "reorder_level": self.reorder_level,
+            "supplier": self.supplier,
+            "cost_price": self.cost_price,
+            "selling_price": self.selling_price,
+            "is_low_stock": self.is_low_stock,
+            "is_active": self.is_active
+        }
     
     def __repr__(self):
         return f'<InventoryItem {self.name}>'
@@ -137,6 +217,19 @@ class StockTransaction(db.Model):
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "item_id": self.item_id,
+            "transaction_type": self.transaction_type,
+            "quantity": self.quantity,
+            "reference_type": self.reference_type,
+            "reference_id": self.reference_id,
+            "supplier": self.supplier,
+            "cost": self.cost,
+            "notes": self.notes
+        }
     
     def __repr__(self):
         return f'<StockTransaction {self.transaction_type} - {self.quantity}>'
@@ -167,6 +260,25 @@ class Bill(db.Model):
     # Relationships
     items = db.relationship('BillItem', backref='bill', lazy='dynamic', cascade='all, delete-orphan')
     creator = db.relationship('User', foreign_keys=[created_by])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "bill_number": self.bill_number,
+            "devotee_id": self.devotee_id,
+            "bill_date": self.bill_date.isoformat() if self.bill_date else None,
+            "subtotal": self.subtotal,
+            "discount_amount": self.discount_amount,
+            "discount_percent": self.discount_percent,
+            "donation_amount": self.donation_amount,
+            "tax_amount": self.tax_amount,
+            "amount_paid": self.amount_paid,
+            "grand_total": self.grand_total,
+            "payment_mode": self.payment_mode,
+            "payment_reference": self.payment_reference,
+            "is_active": self.is_active,
+            "notes": self.notes
+        }
     
     def __repr__(self):
         return f'<Bill {self.bill_number}>'
@@ -181,9 +293,25 @@ class BillItem(db.Model):
     item_type = db.Column(db.String(20), nullable=False)  # POOJA, RETAIL
     item_id = db.Column(db.Integer)  # PoojaService.id or InventoryItem.id
     item_name = db.Column(db.String(200), nullable=False)
+    member_name = db.Column(db.String(150)) 
+    member_nakshathram = db.Column(db.String(50))
     quantity = db.Column(db.Float, default=1.0, nullable=False)
     unit_price = db.Column(db.Integer, nullable=False)  # in Rupee
     total_price = db.Column(db.Integer, nullable=False)  # in Rupee
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "bill_id": self.bill_id,
+            "item_type": self.item_type,
+            "item_id": self.item_id,
+            "item_name": self.item_name,
+            "member_name": self.member_name,
+            "member_nakshathram": self.member_nakshathram,
+            "quantity": self.quantity,
+            "unit_price": self.unit_price,
+            "total_price": self.total_price
+        }
     
     def __repr__(self):
         return f'<BillItem {self.item_name}>'
@@ -192,9 +320,12 @@ class BillItem(db.Model):
 class PoojaBooking(db.Model):
     """Future pooja bookings/scheduling"""
     __tablename__ = 'pooja_bookings'
+
     id = db.Column(db.Integer, primary_key=True)
     booking_number = db.Column(db.String(50), unique=True, nullable=False, index=True)  # BOOK-2024-00123
     devotee_id = db.Column(db.Integer, db.ForeignKey('devotees.id'), nullable=False)
+    member_name = db.Column(db.Text, nullable=False )
+    member_nakshathram = db.Column(db.Text, nullable=True)
     service_id = db.Column(db.Integer, db.ForeignKey('pooja_services.id'), nullable=False)
     booking_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     scheduled_date = db.Column(db.Date, nullable=False, index=True)
@@ -208,10 +339,32 @@ class PoojaBooking(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     bill_id = db.Column(db.Integer, db.ForeignKey('bills.id'))
+    add_to_booking = db.Column(db.Boolean, default=False, nullable=False)
+    
     
     # Relationships
     creator = db.relationship('User', foreign_keys=[created_by])
     bill = db.relationship('Bill', foreign_keys=[bill_id])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "booking_number": self.booking_number,
+            "devotee_id": self.devotee_id,
+            "member_name": self.member_name,
+            "member_nakshathram": self.member_nakshathram,
+            "service_id": self.service_id,
+            "booking_date": self.booking_date.isoformat() if self.booking_date else None,
+            "scheduled_date": self.scheduled_date.isoformat() if self.scheduled_date else None,
+            "quantity": self.quantity,
+            "special_instructions": self.special_instructions,
+            "amount_paid": self.amount_paid,
+            "total_amount": self.total_amount,
+            "balance_amount": self.balance_amount,
+            "status": self.status,
+            "is_active": self.is_active,
+            "add_to_booking": self.add_to_booking
+        }
     
     def __repr__(self):
         return f'<PoojaBooking {self.booking_number}>'
@@ -227,6 +380,15 @@ class Priest(db.Model):
     specialization = db.Column(db.String(200))  # e.g., "Homam specialist"
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "phone": self.phone,
+            "specialization": self.specialization,
+            "is_active": self.is_active
+        }
     
     def __repr__(self):
         return f'<Priest {self.name}>'
@@ -241,6 +403,14 @@ class TempleSettings(db.Model):
     value = db.Column(db.Text)
     description = db.Column(db.String(255))
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "key": self.key,
+            "value": self.value,
+            "description": self.description
+        }
     
     def __repr__(self):
         return f'<Setting {self.key}>'

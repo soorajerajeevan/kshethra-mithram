@@ -1,0 +1,4 @@
+# Copy this file to .dockerenv and update values for production
+FLASK_CONFIG=production
+SECRET_KEY=App4Mattakkuzhi007@
+DATABASE_URL=sqlite:///database/temple_app.db

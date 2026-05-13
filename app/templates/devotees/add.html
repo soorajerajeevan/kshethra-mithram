@@ -13,24 +13,16 @@
                             <input type="text" name="full_name" class="form-control" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label>Nakshatra</label>
-                            <input type="text" name="nakshatra" class="form-control">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
                             <label>Phone *</label>
                             <input type="text" name="phone" class="form-control" required>
                         </div>
+                    </div>
+                    <!-- <div class="row">
                         <div class="col-md-6 mb-3">
                             <label>Email</label>
                             <input type="email" name="email" class="form-control">
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label>Address</label>
-                        <textarea name="address" class="form-control" rows="2"></textarea>
-                    </div>
+                    </div> -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label>House Name</label>
@@ -38,9 +30,15 @@
                         </div>
                     </div>
                     <div class="mb-3">
+                        <label>Address</label>
+                        <textarea name="address" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
                         <label>Family Members</label>
-                        <textarea name="family_members" class="form-control" rows="4" placeholder="One per line. Use: Name | Nakshathram"></textarea>
-                        <small class="text-muted">Example: Sulochana | 12 ഉത്രം</small>
+                        <div id="familyMembersContainer"></div>
+                        <button type="button" id="addFamilyMemberBtn" class="btn btn-outline-secondary btn-sm mt-2">
+                            <i class="bi bi-plus-circle"></i> Add Family Member
+                        </button>
                     </div>
                     <button type="submit" class="btn btn-primary">Add Devotee</button>
                     <a href="{{ url_for('devotees.list') }}" class="btn btn-secondary">Cancel</a>
@@ -49,4 +47,90 @@
         </div>
     </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    var nakshathrams = [];
+
+    function initSearchableSelect(target, options = {}) {
+        if (!target) return null;
+        if (typeof target === 'string' && !target.trim()) return null;
+        const el = typeof target === 'string' ? document.querySelector(target) : target;
+        if (!el || el.nodeType !== 1) return null;
+        if (!el || typeof TomSelect === 'undefined') return null;
+        if (el.tomselect) return el.tomselect;
+        return new TomSelect(el, {
+            maxOptions: 50,
+            maxItems: 1,
+            closeAfterSelect: true,
+            ...options
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        fetch('/devotees/nakshatra')
+            .then(response => response.json())
+            .then(data => {
+                nakshathrams = data.map(n => ({
+                    id: n.malayalam_name,
+                    english_name: n.english_name,
+                    malayalam_name: n.malayalam_name,
+                    display_name: `${n.id} - ${n.malayalam_name}`
+                }));
+                loadDropDownForNakshathra()
+            })
+            .catch(error => console.error('Error fetching nakshatras:', error));
+
+        const container = document.getElementById('familyMembersContainer');
+        const addButton = document.getElementById('addFamilyMemberBtn');
+
+        function addFamilyMemberRow(name = '', nakshathram = '') {
+            const row = document.createElement('div');
+            row.className = 'row g-2 align-items-end mb-2 family-member-row';
+            row.innerHTML = `
+                <div class="col-md-5">
+                    <label class="form-label">Name</label>
+                    <input type="text" name="family_member_name[]" class="form-control" value="${name}">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Nakshathram</label>
+                    <input type="text" name="family_member_nakshathram[]" class="form-control devoteeNakshathram" value="${nakshathram}">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-family-member">Remove</button>
+                </div>
+            `;
+            container.appendChild(row);
+            loadDropDownForNakshathra();
+        }
+
+        addButton.addEventListener('click', function () {
+            addFamilyMemberRow();
+        });
+
+        container.addEventListener('click', function (event) {
+            if (!event.target.classList.contains('remove-family-member')) return;
+            const row = event.target.closest('.family-member-row');
+            if (row) {
+                row.remove();
+            }
+        });
+
+    });
+
+    function loadDropDownForNakshathra() {
+        document.querySelectorAll('input.devoteeNakshathram, select.devoteeNakshathram').forEach((el) => {
+            if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement)) return;
+            initSearchableSelect(el, {
+                valueField: 'malayalam_name',
+                labelField: 'display_name',
+                searchField: ['english_name', 'id', 'malayalam_name'],
+                options: nakshathrams,
+                placeholder: 'Nakshathram',
+                create: false
+            });
+        });
+    }
+
+</script>
 {% endblock %}

@@ -42,9 +42,9 @@ class ProductionConfig(Config):
     # PostgreSQL connection string for production
     # Format: postgresql://username:password@host:port/database
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://temple_user:temple_pass@localhost:5432/temple_db'
+        'sqlite:///' + os.path.join(basedir, 'database', 'temple_dev.db')
     SQLALCHEMY_ECHO = False
-    SESSION_COOKIE_SECURE = True  # Require HTTPS
+    # SESSION_COOKIE_SECURE = True  # Require HTTPS
 
 
 class TestingConfig(Config):

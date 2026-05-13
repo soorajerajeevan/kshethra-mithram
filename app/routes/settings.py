@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models import TempleSettings, User, Priest, PoojaBooking, Bill, StockTransaction
@@ -6,6 +6,8 @@ from werkzeug.utils import secure_filename
 import os
 import shutil
 from datetime import datetime
+import json
+from app.utils.dotmatrix_layout import build_receipt_lines, compute_layout_model, normalize_layout_config
 
 bp = Blueprint('settings', __name__, url_prefix='/settings')
 
@@ -26,6 +28,13 @@ def admin_required(f):
 def index():
     """Settings dashboard"""
     return render_template('settings/index.html')
+
+
+def _preview_bill_data():
+    bill = Bill.query.order_by(Bill.bill_date.desc()).first()
+    if bill:
+        return bill
+    return None
 
 
 @bp.route('/temple', methods=['GET', 'POST'])
@@ -79,6 +88,67 @@ def temple_settings():
         settings_dict[setting.key] = setting.value
     
     return render_template('settings/temple_settings.html', settings=settings_dict)
+
+
+@bp.route('/dotmatrix-layout')
+@admin_required
+def dotmatrix_layout_designer():
+    """Dot matrix layout designer page"""
+    bill = _preview_bill_data()
+    if not bill:
+        flash('Create at least one bill to design dot matrix layout preview.', 'warning')
+        return redirect(url_for('billing.new_bill'))
+
+    settings_map = {
+        setting.key: setting.value
+        for setting in TempleSettings.query.filter(
+            TempleSettings.key.in_(['temple_name', 'temple_address', 'temple_phone', 'receipt_footer', 'dotmatrix6_layout_config'])
+        ).all()
+    }
+    temple_name = settings_map.get('temple_name') or 'Sri Venkateshwara Temple'
+    temple_address = settings_map.get('temple_address') or 'Temple Road, Temple City'
+    temple_phone = settings_map.get('temple_phone') or '+91 1234567890'
+    receipt_footer = settings_map.get('receipt_footer') or 'May the divine bless you!'
+    layout_config = normalize_layout_config(settings_map.get('dotmatrix6_layout_config'))
+    lines = build_receipt_lines(bill, temple_name, temple_address, temple_phone, receipt_footer)
+    layout_model = compute_layout_model(lines, layout_config)
+
+    return render_template(
+        'settings/dotmatrix_layout.html',
+        preview_bill=bill,
+        dotmatrix_layout=layout_model,
+        dotmatrix_layout_config=layout_config
+    )
+
+
+@bp.route('/dotmatrix-layout/config', methods=['GET'])
+@admin_required
+def dotmatrix_layout_config_get():
+    setting = TempleSettings.query.filter_by(key='dotmatrix6_layout_config').first()
+    return jsonify(normalize_layout_config(setting.value if setting else None))
+
+
+@bp.route('/dotmatrix-layout/config', methods=['POST'])
+@admin_required
+def dotmatrix_layout_config_save():
+    payload = request.get_json(silent=True) or {}
+    config = normalize_layout_config(payload)
+    serialized = json.dumps(config)
+
+    setting = TempleSettings.query.filter_by(key='dotmatrix6_layout_config').first()
+    if setting:
+        setting.value = serialized
+        setting.updated_at = datetime.utcnow()
+    else:
+        setting = TempleSettings(
+            key='dotmatrix6_layout_config',
+            value=serialized,
+            description='Dot matrix 6-inch receipt canvas layout config'
+        )
+        db.session.add(setting)
+
+    db.session.commit()
+    return jsonify({"success": True, "config": config})
 
 
 @bp.route('/users')

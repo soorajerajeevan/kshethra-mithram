@@ -1,40 +1,68 @@
 {% extends "base.html" %}
-{% block title %}Bills{% endblock %}
+{% block title %}Pooja List{% endblock %}
+
+{% block extra_css %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pooja-list.css') }}">
+
+{% endblock %}
 {% block content %}
 <div class="row mb-3">
-    <div class="col-md-6"><h2><i class="bi bi-receipt"></i> All Bills</h2></div>
+    <div class="col-md-6">
+        <h2><i class="bi bi-calendar-event"></i> Pooja List</h2>
+    </div>
     <div class="col-md-6 text-end">
         <a href="{{ url_for('billing.new_bill') }}" class="btn btn-primary">
             <i class="bi bi-plus"></i> New Bill
         </a>
     </div>
 </div>
-<div class="card">
-    <div class="card-body">
-        <form method="GET" class="mb-3">
-            <div class="input-group">
-                <input type="text" name="search" class="form-control" placeholder="Search by bill number or devotee" value="{{ search }}">
-                <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Search</button>
-            </div>
-        </form>
-        <table class="table">
-            <thead><tr><th>Bill No</th><th>Date</th><th>Devotee</th><th>Amount</th><th>Payment</th><th>Action</th></tr></thead>
-            <tbody>
-                {% for bill in bills.items %}
-                <tr>
-                    <td>{{ bill.bill_number }}</td>
-                    <td>{{ bill.bill_date|format_datetime }}</td>
-                    <td>{{ bill.devotee.full_name }}</td>
-                    <td>{{ bill.grand_total|currency }}</td>
-                    <td><span class="badge bg-info">{{ bill.payment_mode }}</span></td>
-                    <td>
-                        <a href="{{ url_for('billing.view_bill', id=bill.id) }}" class="btn btn-sm btn-primary">View</a>
-                        <a href="{{ url_for('billing.edit_bill', id=bill.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+<!-- Filter Section -->
+<div class="filter-section">
+    <h5 class="mb-3">Filters</h5>
+    <div class="filter-row">
+        <div class="filter-group">
+            <label for="filterStartDate">Start Date</label>
+            <input type="date" id="filterStartDate" class="form-control">
+        </div>
+        <div class="filter-group">
+            <label for="filterEndDate">End Date</label>
+            <input type="date" id="filterEndDate" class="form-control">
+        </div>
+        <div class="filter-group">
+            <label for="filterPooja">Pooja Service</label>
+            <select id="filterPooja" class="form-control">
+                <option value=""></option>
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button type="button" class="btn-filter" onclick="applyFilters()">
+                <i class="bi bi-funnel"></i> Apply Filters
+            </button>
+            <button type="button" class="btn-filter-reset" onclick="resetFilters()">
+                <i class="bi bi-arrow-clockwise"></i> Reset
+            </button>
+            <button type="button" class="btn btn-outline-primary" onclick="exportPoojaGrid()">
+                <i class="bi bi-file-earmark-excel"></i> Export
+            </button>
+        </div>
     </div>
 </div>
+
+<!-- AG Grid -->
+<div class="card">
+    <div class="card-body">
+        <div id="poojaGrid" class="ag-theme-quartz"></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script type="module"
+        src="{{ url_for('static',
+        filename='js/pages/pooja-list.js') }}">
+</script>
 {% endblock %}
