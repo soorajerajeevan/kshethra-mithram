@@ -36,7 +36,7 @@ def compute_ci_version(base_version: str, commit_sha: str) -> str:
 
 def compute_deploy_version(base_version: str, commit_sha: str) -> str:
     unix_ts = int(time.time())
-    return f"{base_version}.post{unix_ts}+{short_commit_id(commit_sha)}"
+    return f"{base_version}.{short_commit_id(commit_sha)}"
 
 
 def find_repo_root(start: Path) -> Path:
