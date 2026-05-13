@@ -5,20 +5,38 @@ from __future__ import annotations
 
 import argparse
 import os
+import subprocess
 import time
 from pathlib import Path
 
 
-def compute_ci_version(base_version: str) -> str:
+def short_commit_id(commit_sha: str, length: int = 7) -> str:
+    return commit_sha[:length]
+
+
+def resolve_commit_sha(repo_root: Path, fallback: str = "local") -> str:
+    env_sha = os.getenv("GITHUB_SHA")
+    if env_sha:
+        return env_sha
+    try:
+        sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
+        ).strip()
+        if sha:
+            return sha
+    except Exception:
+        pass
+    return fallback
+
+
+def compute_ci_version(base_version: str, commit_sha: str) -> str:
     run_number = os.getenv("GITHUB_RUN_NUMBER", "0")
-    short_sha = os.getenv("GITHUB_SHA", "local")[:7]
-    return f"{base_version}.post{run_number}+g{short_sha}"
+    return f"{base_version}.post{run_number}+{short_commit_id(commit_sha)}"
 
 
 def compute_deploy_version(base_version: str, commit_sha: str) -> str:
     unix_ts = int(time.time())
-    short_sha = commit_sha[:7]
-    return f"{base_version}.post{unix_ts}+g{short_sha}"
+    return f"{base_version}.post{unix_ts}+{short_commit_id(commit_sha)}"
 
 
 def find_repo_root(start: Path) -> Path:
@@ -45,11 +63,12 @@ def main() -> None:
 
     repo_root = find_repo_root(Path(__file__).resolve().parent)
     base_version = (repo_root / "VERSION").read_text(encoding="utf-8").strip()
+    commit_sha = args.commit_sha if args.commit_sha != "local" else resolve_commit_sha(repo_root)
 
     if args.mode == "deploy":
-        version = compute_deploy_version(base_version, args.commit_sha)
+        version = compute_deploy_version(base_version, commit_sha)
     else:
-        version = compute_ci_version(base_version)
+        version = compute_ci_version(base_version, commit_sha)
     print(version)
 
 
