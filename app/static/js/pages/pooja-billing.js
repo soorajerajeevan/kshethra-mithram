@@ -68,11 +68,14 @@ function initializeSearchables() {
         create: function (input) {
             const name = (input || '').trim();
             if (!name) return false;
-            return {
+            selectedDevotee = {
                 id: 0, // Temporary ID for new devotee
                 display_name: `${name} (New devotee)`,
                 full_name: name,
+                family_members: [{ name: name, nakshathram: '' }]
             };
+            updateFamilyMemberOptions(0);
+            return selectedDevotee;
         },
         onChange: function (id) {
             selectedDevotee = getSelectedPrimaryDevotee();
@@ -90,25 +93,20 @@ function getSelectedPrimaryDevotee() {
     const devoteeId = document.getElementById('devotee_id').value || '';
     if (!/^\d+$/.test(devoteeId)) return null;
     if (devoteeId == 0) {
-        return {
-            id: 0,
-            full_name: document.getElementById('devotee_id').options[document.getElementById('devotee_id').selectedIndex].text.replace(' (New devotee)', '').trim(),
-            nakshathram: '',
-            family_members: [],
-            phone: document.getElementById('new_devotee_phone').value.trim()
-        };
+        return selectedDevotee;
     }
     return devotees.find(d => String(d.id) === String(devoteeId)) || null;
 }
 
 function updateFamilyMemberOptions(devoteeId) {
+    console.log("Selected Devotee for "+ devoteeId, selectedDevotee)
     if (selectedDevotee) {
         if (selectedDevotee.family_members.size == 0)
             familyMembers = [{ name: selectedDevotee.full_name, nakshathram: selectedDevotee.nakshatra }];
         else
             familyMembers = selectedDevotee.family_members.map(m => ({ name: m.name, nakshathram: m.nakshathram }));
     }
-    console.log("Refreshing family member options for all pooja rows. Family members:", familyMembers);
+    console.trace("Refreshing family member options for all pooja rows. Family " + devoteeId + " members:", familyMembers);
     Object.keys(tomSelectInstances)
         .filter(key => key.startsWith('family_'))
         .forEach(key => {
