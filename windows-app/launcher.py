@@ -48,6 +48,10 @@ def setup_environment():
     # Change working directory to base so relative imports work
     os.chdir(base)
 
+    # Add base directory to Python path so 'app' module can be imported
+    if base not in sys.path:
+        sys.path.insert(0, base)
+
     # Set Flask configuration
     os.environ.setdefault('FLASK_CONFIG', 'production')
 
