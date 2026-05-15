@@ -20,12 +20,14 @@ $ErrorActionPreference = "Stop"
 
 # Get the project root (parent of windows-app)
 $projectRoot = Split-Path -Parent $PSScriptRoot
+$windowsAppDir = $PSScriptRoot
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Kshethra-Mithram Windows Build" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Project root: $projectRoot" -ForegroundColor Gray
+Write-Host "Windows app dir: $windowsAppDir" -ForegroundColor Gray
 Write-Host ""
 
 # Step 1: Build webpack assets
@@ -50,13 +52,13 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Step 3: Run PyInstaller from project root
+# Step 3: Run PyInstaller from windows-app directory
 Write-Host ""
 Write-Host "Step 3: Building executable with PyInstaller..." -ForegroundColor Yellow
-Push-Location $projectRoot
+Push-Location $windowsAppDir
 try {
-    # Run pyinstaller from project root so __file__ and paths work correctly
-    pyinstaller windows-app/kshethra-mithram.spec --noconfirm
+    # Run pyinstaller from windows-app/ dir so all relative paths work
+    pyinstaller kshethra-mithram.spec --noconfirm
     if ($LASTEXITCODE -ne 0) {
         Write-Host "ERROR: PyInstaller build failed" -ForegroundColor Red
         exit 1
