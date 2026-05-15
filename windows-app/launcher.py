@@ -80,6 +80,7 @@ def setup_environment():
 def start_flask():
     """Create and run the Flask application."""
     from app import create_app, db
+    from app.models import User
 
     # Create the Flask app with production config
     app = create_app('production')
@@ -91,6 +92,13 @@ def start_flask():
     # Initialize database tables on first run
     with app.app_context():
         db.create_all()
+
+        # Check if database is empty (no users) and seed if needed
+        if User.query.first() is None:
+            print("Database is empty. Seeding with initial data...")
+            from app.seed import seed_all
+            seed_all()
+            print("Database seeded successfully!")
 
     # Run Flask server on localhost only (not accessible from network)
     # debug=False, use_reloader=False to avoid issues with PyInstaller

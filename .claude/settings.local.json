@@ -10,7 +10,15 @@
       "Bash(git add *)",
       "Bash(git commit -m 'feat: migrate frontend assets from CDN to NPM package management *)",
       "Bash(git commit -m 'docs: add comprehensive frontend migration documentation *)",
-      "Bash(git commit -m 'feat: update template asset references to use NPM bundled assets *)"
+      "Bash(git commit -m 'feat: update template asset references to use NPM bundled assets *)",
+      "Bash(ls /c/Users/rajeevan/.claude/plans/ 2>/dev/null || echo \"directory not found\")",
+      "Read(//c/Users/rajeevan/.claude/plans//**)",
+      "mcp__filesystem__create_directory",
+      "Bash(cat > *)",
+      "mcp__filesystem__read_text_file"
+    ],
+    "additionalDirectories": [
+      "c:\\work\\Project\\RnD\\temple_app\\kshethra-mithram\\windows-app"
     ]
   }
 }
