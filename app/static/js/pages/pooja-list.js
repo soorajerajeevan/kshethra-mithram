@@ -124,7 +124,7 @@ function loadPoojaData() {
                         grandTotal: bill.grandTotal,
                         paymentMode: bill.paymentMode,
                         paymentReference: bill.paymentReference,
-                        notes: bill.notes,
+                        notes: item.notes,
                         rowSpan: bill.items.length
                     });
                 });

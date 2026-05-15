@@ -298,6 +298,7 @@ class BillItem(db.Model):
     quantity = db.Column(db.Float, default=1.0, nullable=False)
     unit_price = db.Column(db.Integer, nullable=False)  # in Rupee
     total_price = db.Column(db.Integer, nullable=False)  # in Rupee
+    notes = db.Column(db.Text)  # per-item notes/special instructions
 
     def to_dict(self):
         return {
@@ -310,7 +311,8 @@ class BillItem(db.Model):
             "member_nakshathram": self.member_nakshathram,
             "quantity": self.quantity,
             "unit_price": self.unit_price,
-            "total_price": self.total_price
+            "total_price": self.total_price,
+            "notes": self.notes
         }
     
     def __repr__(self):

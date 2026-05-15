@@ -291,6 +291,7 @@ def new_bill():
                 pooja_nakshathram = (request.form.get(f'pooja_nakshathram_{i}') or '').strip()
                 pooja_date = (request.form.get(f'pooja_date_{i}') or '').strip()
                 quantity = max(_safe_float(request.form.get(f'pooja_quantity_{i}'), 1), 1)                        
+                pooja_notes = (request.form.get(f'pooja_notes_{i}') or '').strip()
                 custom_price = request.form.get(f'pooja_price_{i}')
                 price_paise = int(_safe_float(custom_price)) if custom_price else service.default_price
                 total_price = int(price_paise * quantity)
@@ -312,6 +313,7 @@ def new_bill():
                     'quantity': quantity,
                     'unit_price': price_paise,
                     'total_price': total_price,
+                    'notes': pooja_notes,
                     'service': service,
                     'add_to_booking': request.form.get(f'add_to_booking_{i}') == 'on'
                 })
@@ -415,7 +417,8 @@ def new_bill():
                 member_nakshathram=item_data['member_nakshathram'],
                 quantity=item_data['quantity'],
                 unit_price=item_data['unit_price'],
-                total_price=item_data['total_price']
+                total_price=item_data['total_price'],
+                notes=item_data.get('notes', '')
             )
             db.session.add(bill_item)
             db.session.flush()
@@ -705,6 +708,29 @@ def receipt_pdf(id):
     return response
 
 
+@bp.route('/<int:id>/receipt-direct')
+@login_required
+def receipt_direct(id):
+    """Plain-text receipt for direct dot-matrix printing"""
+    bill = Bill.query.get_or_404(id)
+
+    from app.models import TempleSettings
+    temple_name = TempleSettings.query.filter_by(key='temple_name').first()
+    temple_address = TempleSettings.query.filter_by(key='temple_address').first()
+    temple_phone = TempleSettings.query.filter_by(key='temple_phone').first()
+    receipt_footer = TempleSettings.query.filter_by(key='receipt_footer').first()
+
+    temple_name = temple_name.value if temple_name else 'Sri Venkateshwara Temple'
+    temple_address = temple_address.value if temple_address else 'Temple Road, Temple City'
+    temple_phone = temple_phone.value if temple_phone else '+91 1234567890'
+    receipt_footer = receipt_footer.value if receipt_footer else 'May the divine bless you!'
+
+    receipt_lines = build_receipt_lines(bill, temple_name, temple_address, temple_phone, receipt_footer)
+    plain_text = '\n'.join(line['text'] for line in receipt_lines)
+
+    return render_template('billing/receipt_direct.html', bill=bill, plain_text=plain_text)
+
+
 @bp.route('/<int:id>/whatsapp')
 @login_required
 def whatsapp_receipt(id):
@@ -835,6 +861,7 @@ def api_pooja_list():
                 "quantity": float(item.quantity),
                 "unitPrice": int(item.unit_price),
                 "totalPrice": int(item.total_price),
+                "notes": item.notes or '',
 
                 "service": {
                     "id": service.id,

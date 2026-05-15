@@ -272,11 +272,11 @@ function addPoojaItem() {
         <div class="col-md-2">
             <select name="pooja_devotee_name_${poojaCounter}" id="pooja_devotee_name_${poojaCounter}" class="form-select form-select-sm" required></select>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-1">
             <select name="pooja_nakshathram_${poojaCounter}" id="pooja_nakshathram_${poojaCounter}" class="form-select form-select-sm" required></select>
         </div>
-        <div class="col-md-2"><input type="date" name="pooja_date_${poojaCounter}" id="pooja_date_${poojaCounter}" class="form-control form-control-sm" required></div>
-       
+        <div class="col-md-1"><input type="date" name="pooja_date_${poojaCounter}" id="pooja_date_${poojaCounter}" class="form-control form-control-sm" required></div>
+        <div class="col-md-2"><input type="text" name="pooja_notes_${poojaCounter}" id="pooja_notes_${poojaCounter}" class="form-control form-control-sm" placeholder="Notes (optional)"></div>
         <div class="col-md-1"><input type="number" name="pooja_quantity_${poojaCounter}" id="pooja_quantity_${poojaCounter}" class="form-control form-control-sm" value="1" step="1" min="1" onchange="calculateTotal()" required></div>
         <div class="col-md-1"><input type="number" name="pooja_price_${poojaCounter}" id="pooja_price_${poojaCounter}" class="form-control form-control-sm" step="1" min="0" placeholder="Price" onchange="calculateTotal()" required></div>
          <div class="col-md-1 d-flex justify-content-center">        
@@ -538,14 +538,6 @@ getToday = () => {
 
 document.getElementById('billForm').addEventListener('submit', function (event) {
 
-    const formData = new FormData(this);
-
-    console.log('=== Form Data ===');
-
-    for (const [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-    }
-
     const devoteeName = document.getElementById('devotee_name').value || '';
     const devoteeId = document.getElementById('devotee_id').value || '';
     const phoneEl = document.getElementById('new_devotee_phone');
@@ -553,14 +545,13 @@ document.getElementById('billForm').addEventListener('submit', function (event) 
     if (devoteeId == 0 && !phone) {
         event.preventDefault();
         alert('Please enter phone number for new devotee.');
+        return;
     }
 
     const invalidFields = this.querySelectorAll(':invalid');
 
     if (invalidFields.length > 0) {
-
-        console.log('Invalid fields:');
-
+        console.log('Invalid fields found:');
         invalidFields.forEach(field => {
             console.log({
                 name: field.name,
@@ -568,28 +559,14 @@ document.getElementById('billForm').addEventListener('submit', function (event) 
                 value: field.value,
                 validationMessage: field.validationMessage
             });
-
-            // Optional visual highlight
             field.style.border = '2px solid red';
         });
 
         // Focus first invalid field
         invalidFields[0].focus();
-
-        // Prevent submit temporarily for debugging
-        e.preventDefault();
-
-
-        // -----------------------------
-        // Log Submitted Data
-        // -----------------------------
-        const formData = new FormData(form);
-
-        console.log('=== Form Data ===');
-
-        for (const [key, value] of formData.entries()) {
-            console.log(`${key}:`, value);
-        }
+        
+        // Prevent submit
+        event.preventDefault();
     }
 });
 
