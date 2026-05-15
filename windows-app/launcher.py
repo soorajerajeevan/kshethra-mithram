@@ -8,6 +8,7 @@ It handles:
 - Setting up writable paths for database, uploads, and app secrets
 - Initializing the Flask app and database
 - Starting Flask and opening the browser
+- Managing system tray icon for app control
 """
 
 import sys
@@ -17,6 +18,7 @@ import webbrowser
 import time
 import secrets
 from pathlib import Path
+from io import BytesIO
 
 
 def get_base_dir():
@@ -77,6 +79,48 @@ def setup_environment():
     os.environ['UPLOAD_FOLDER'] = uploads_dir
 
 
+def create_tray_icon():
+    """Create a PIL Image for the tray icon."""
+    from PIL import Image, ImageDraw
+    
+    # Create a simple temple icon: orange/yellow square with a small design
+    size = (64, 64)
+    image = Image.new('RGB', size, color='white')
+    draw = ImageDraw.Draw(image)
+    
+    # Draw a simple temple shape (orange background with a top)
+    draw.rectangle([8, 20, 56, 56], fill='#FF8C00', outline='#FF6347', width=2)
+    draw.polygon([(8, 20), (32, 5), (56, 20)], fill='#FF6347', outline='#FF6347')
+    
+    return image
+
+
+def start_tray_icon(app_ref):
+    """Start the system tray icon with quit functionality."""
+    try:
+        from pystray import Icon, Menu, MenuItem
+        
+        image = create_tray_icon()
+        
+        def on_quit(icon, item):
+            """Handle quit action from tray menu."""
+            print("\nShutting down Kshethra-Mithram...")
+            icon.stop()
+            os._exit(0)
+        
+        menu = Menu(
+            MenuItem('Kshethra-Mithram (Running)', None, enabled=False),
+            MenuItem('---', None),
+            MenuItem('Open in Browser', lambda: webbrowser.open('http://127.0.0.1:5000')),
+            MenuItem('Quit', on_quit)
+        )
+        
+        icon = Icon('kshethra-mithram', image, menu=menu)
+        icon.run()
+    except Exception as e:
+        print(f"Warning: Could not create system tray icon: {e}")
+
+
 def start_flask():
     """Create and run the Flask application."""
     from app import create_app, db
@@ -107,7 +151,8 @@ def start_flask():
         port=5000,
         debug=False,
         use_reloader=False,
-        use_debugger=False
+        use_debugger=False,
+        threaded=True
     )
 
 
@@ -125,5 +170,9 @@ if __name__ == '__main__':
     browser_thread = threading.Thread(target=open_browser, daemon=True)
     browser_thread.start()
 
-    # Start Flask in the main thread (blocking)
-    start_flask()
+    # Start Flask in a background thread
+    flask_thread = threading.Thread(target=start_flask, daemon=False)
+    flask_thread.start()
+
+    # Start system tray icon in the main thread
+    start_tray_icon(None)
