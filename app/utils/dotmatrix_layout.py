@@ -2,12 +2,12 @@ import hashlib
 import json
 from datetime import datetime
 
-LINE_WIDTH = 60
-ITEM_WIDTH = 39
+LINE_WIDTH = 64
+ITEM_WIDTH = 40
 QTY_WIDTH = 5
 AMT_WIDTH = 14
-TOTAL_LABEL_WIDTH = 46
-TOTAL_VALUE_WIDTH = 14
+TOTAL_LABEL_WIDTH = 50
+TOTAL_VALUE_WIDTH = 18
 PAGE_WIDTH_PX = 576
 SIDE_PADDING_PX = 5
 CONTENT_WIDTH_PX = PAGE_WIDTH_PX - (SIDE_PADDING_PX * 2)
@@ -27,7 +27,26 @@ def _amount_plain(value):
 
 def _center_text(text, width):
     text = (text or "")[:width]
-    return f"{text:^{width}}"
+    # For multi-byte characters, use simple left-right centering
+    text_len = len(text)
+    left_pad = max(0, (width - text_len) // 2)
+    right_pad = width - text_len - left_pad
+    return " " * left_pad + text + " " * right_pad
+
+
+def _display_width(text):
+    """Calculate approximate display width of text."""
+    return sum(1 for _ in text)
+
+
+def _truncate_to_width(text, max_width):
+    """Truncate text to fit within max_width display characters."""
+    width = 0
+    for i, char in enumerate(text):
+        if width >= max_width:
+            return text[:i]
+        width += 1
+    return text
 
 
 def _kv_line(label, value, width):
@@ -101,8 +120,25 @@ def build_receipt_lines(bill, temple_name, temple_address, temple_phone, receipt
         name = item.item_name or ""
         qty = f"{float(item.quantity or 0):g}"
         amt = _amount_plain(item.total_price)
-        truncated_name = name[:ITEM_WIDTH]
-        add(f"{truncated_name:<{ITEM_WIDTH}} {qty[:QTY_WIDTH]:>{QTY_WIDTH}} {amt[-AMT_WIDTH:]:>{AMT_WIDTH}}", "item")
+        
+        # If name is short enough, display on single line with qty and amount
+        # Otherwise, display name on first line and qty/amount on second line
+        if len(name) <= (ITEM_WIDTH - 5):
+            truncated_name = _truncate_to_width(name, ITEM_WIDTH)
+            padded_name = f"{truncated_name:<{ITEM_WIDTH}}"[:ITEM_WIDTH]
+            add(f"{padded_name} {qty[:QTY_WIDTH]:>{QTY_WIDTH}} {amt[-AMT_WIDTH:]:>{AMT_WIDTH}}", "item")
+        else:
+            # Long name: put on first line, qty/amount on second line
+            full_name = _truncate_to_width(name, LINE_WIDTH)
+            add(full_name, "item")
+            # Second line: right-align qty and amount
+            qty_amt_spacing = " " * (LINE_WIDTH - QTY_WIDTH - 1 - AMT_WIDTH)
+            add(f"{qty_amt_spacing}{qty[:QTY_WIDTH]:>{QTY_WIDTH}} {amt[-AMT_WIDTH:]:>{AMT_WIDTH}}", "item")
+        
+        if item.notes:
+            note_prefix = "  > "
+            note_text = (note_prefix + item.notes)[:LINE_WIDTH]
+            add(note_text, "item-note")
 
     add(sep, "divider")
     add(_total_line("Subtotal", _amount_rs(bill.subtotal)), "total")
@@ -132,7 +168,7 @@ def build_receipt_lines(bill, temple_name, temple_address, temple_phone, receipt
     footer = receipt_footer or ""
     for i in range(0, len(footer), LINE_WIDTH):
         add(footer[i:i + LINE_WIDTH], "footer")
-    add(_center_text("Powered by Temple Mgmt System", LINE_WIDTH), "footer")
+    add(_center_text("Powered by kshethra-mithram", LINE_WIDTH), "footer")
     add(sep, "divider")
     return lines
 

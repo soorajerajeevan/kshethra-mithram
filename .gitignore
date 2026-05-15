@@ -237,3 +237,7 @@ toolchain.yaml
 patterns/gev.md
 patterns/ralph-wiggum.md
 .claude/settings.local.json
+# Windows App Build Artifacts
+windows-app/dist/
+windows-app/build/
+windows-app/__pycache__/

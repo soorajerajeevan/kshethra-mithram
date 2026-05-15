@@ -47,6 +47,12 @@ import { billSpanMatcher } from './grid-utils.js';
                     minWidth: 130
                 },
                 {
+                    headerName: 'Notes',
+                    field: 'notes',
+                    width: 180,
+                    minWidth: 130
+                },
+                {
                     headerName: 'Scheduled',
                     field: 'billDate',
                     width: 140

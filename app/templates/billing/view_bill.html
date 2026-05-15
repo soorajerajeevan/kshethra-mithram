@@ -21,7 +21,11 @@
                     </a></li>
                 </ul>
             </div>
-            
+
+            <a href="{{ url_for('billing.receipt_direct', id=bill.id) }}" class="btn btn-secondary" target="_blank">
+                <i class="bi bi-printer-fill"></i> Print Directly
+            </a>
+
             <a href="{{ url_for('billing.whatsapp_receipt', id=bill.id) }}" class="btn btn-success">
                 <i class="bi bi-whatsapp"></i> WhatsApp
             </a>
@@ -44,10 +48,13 @@
                 <p><strong>Amount Paid:</strong> {{ bill.amount_paid|currency }}
                 {% if bill.payment_mode == 'Credit' %}
                     <span class="badge bg-danger">Unpaid</span>
-                {% endif %}            
-                </p> 
+                {% endif %}
+                </p>
                 {% if bill.payment_reference %}
                 <p><strong>Reference:</strong> {{ bill.payment_reference }}</p>
+                {% endif %}
+                {% if bill.notes %}
+                <p><strong>Notes:</strong> {{ bill.notes }}</p>
                 {% endif %}
             </div>
         </div>

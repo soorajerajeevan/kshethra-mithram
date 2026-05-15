@@ -55,7 +55,7 @@ def seed_all():
         ('temple_address', 'Temple Road, Temple City - 123456', 'Temple address'),
         ('temple_phone', '+91 1234567890', 'Temple phone'),
         ('temple_email', 'info@temple.com', 'Temple email'),
-        ('receipt_footer', '🕉️ May the divine bless you with peace and prosperity!', 'Receipt footer message'),
+        ('receipt_footer', '', 'Receipt footer message'),
         ('time_slots', '06:00 AM\n07:00 AM\n08:00 AM\n09:00 AM\n10:00 AM\n11:00 AM\n12:00 PM\n04:00 PM\n05:00 PM\n06:00 PM', 'Available time slots')
     ]
     
@@ -80,45 +80,77 @@ def seed_all():
     
     # Create sample poojas (English + Malayalam + rate in rupees)
     poojas_data = [
-        ('PUSHPANJALI', 'പുഷ്പാഞ്ജലി', 10), ('NAGANGALK PAALUM NOORUM', 'നാഗങ്ങള്‍ക്ക് പാലും നൂറും', 101),
-        ('KETHU POOJA', 'കേതു പൂജ', 301), ('VILAKKU', 'വിളക്ക്', 10), ('RAHU POOJA', 'രാഹു പൂജ', 301),
-        ('25 PERSONS', '25 പേർക്ക്', 500), ('NAGANGALKU POOJA', 'നാഗങ്ങൾക്ക് പൂജ', 201), ('NEY VILAKKU', 'നെയ്യ് വിളക്ക്', 20),
-        ('AAYILYA POOJA', 'ആയില്ല്യ പൂജ', 201), ('50 PERSONS', '50 പേർക്ക്', 1000), ('SOORAYANU POOJA', 'സൂര്യന് പൂജ', 301),
-        ('MAALA', 'മാല', 50), ('CHANDHRA POOJA', 'ചന്ദ്ര പൂജ', 301), ('75 PERSONS', '75 പേർക്ക്', 1500),
-        ('DHARA', 'ധാര', 10), ('NAGANGALKKU THATTU', 'നാഗങ്ങൾക്ക് തട്ട്', 301), ('SAARASWATHA PUSHPANJALI', 'സാരസ്വത പുഷ്പാഞ്ജലി', 20),
-        ('MRITHYUMJAYA PUSHPANJALI', 'മൃത്യുഞ്ജയ പുഷ്പാഞ്ജലി', 20), ('SAARASWATHA PUSHPANJAL', 'സാരസ്വത പുഷ്പാഞ്ജലി', 20),
-        ('BHRAMA RAKSHASIN POOJA', 'ബ്രമ രക്ഷസിന് പൂജ', 101), ('100 PERSONS', '100 പേർക്ക്', 2000), ('BUDHANU POOJA', 'ബുധന് പൂജ', 301),
-        ('SHUKRANU POOJA', 'ശുക്രന് പൂജ', 301), ('VIDHYASOOKTHA PUSHPANJALI', 'വിദ്യാസൂക്ത പുഷ്പാഞ്ജലി', 20),
-        ('BHAGYASOOKTHA PUSHPANJALI', 'ഭാഗ്യസൂക്ത പുഷ്പാഞ്ജലി', 20), ('NEY', 'നെയ്യ്', 20), ('SHANISWARA POOJA', 'ശനീശ്വര പൂജ', 301),
-        ('SWASTHIMANTHRA PUSHPANJALI', 'സ്വസ്തിമന്ത്ര പുഷ്പാഞ്ജലി', 20), ('KUMARASOOKTHA PUSHPANJALI', 'കുമാരസൂക്ത പുഷ്പാഞ്ജലി', 50),
-        ('DURGAMANTHRA PUSHPANJALI', 'ദുർഗ്ഗാമന്ത്ര പുഷ്പാഞ്ജലി', 20), ('PURUSHASOOKTHA PUSHPANJALI', 'പുരുഷസൂക്ത പുഷ്പാഞ്ജലി', 20),
-        ('STHREESOOKTHA PUSHPANJALI', 'സ്ത്രീസുക്ത പുഷ്പാഞ്ജലി', 20), ('SHATHRU SAMHARA PUSHPANJALI', 'ശത്രു സംഹാര പുഷ്പാഞ്ജലി', 20),
-        ('ASHTOTHARA PUSHPANJALI', 'അഷ്ടോത്തര പുഷ്പാഞ്ജലി', 20), ('GANAPATHI POOJA', 'ഗണപതി പൂജ', 151),
-        ('GANAPATHI HOMAM', 'ഗണപതി ഹോമം', 501), ('ELLU THIRI', 'എള്ള്‌ തിരി', 10), ('MAHARUDHRA ABHISHEKAM', 'മഹാരുദ്ര അഭിഷേകം', 2500),
-        ('SWAYAMWARA PUSHPANJALI', 'സ്വയംവര പുഷ്പാഞ്ജലി', 20), ('SREERAMANU POOJA', 'ശ്രീരാമന് പൂജ', 151),
-        ('HANUMANU POOJA', 'ഹനുമാന് പൂജ', 151), ('KARUKA HOMAM', 'കറുക ഹോമം', 251), ('THILA HOMAM', 'തില ഹോമം', 251),
-        ('VADAMAALA', 'വടമാല', 301), ('AYYAPPANU POOJA', 'അയ്യപ്പന്‍ പൂജ', 151), ('SHIVANU POOJA', 'ശിവന് പൂജ', 151),
-        ('AIKYAMATHYA PUSHPANJALI', 'ഐക്യമത്യ പുഷ്പാഞ്ജലി', 20), ('SHADABHISHEKAM', 'ഷഡാഭിഷേകം', 1500), ('PAAL ABHISHEKAM', 'പാൽ അഭിഷേകം', 51),
-        ('SHARKARA PAYASAM', 'ശർക്കര പായസം', 50), ('AYYAPPASWAMIKKU NEERANJANAM', 'അയ്യപ്പസ്വാമിക്ക് നീരാഞ്ജനം', 55),
-        ('VETTILAMALA', 'വെറ്റിലമാല', 101), ('MUN VILLAKU/ PIN VILLAKU', 'മുന്‍ വിളക്ക്/പിന്‍ വിളക്ക്', 20),
-        ('MRITHYUNJAYA HOMAM', 'മൃത്യുഞ്ജയ ഹോമം', 1001), ('SUDHARSHANA HOMAM', 'സുദർശന ഹോമം', 751),
-        ('PAAL PAYASAM', 'പാൽ പായസം', 60), ('SHANGABHISHEKAM', 'ശംഖാഭിഷേകം', 51), ('PANINEER ABHISHEKAM', 'പനിനീർ അഭിഷേകം', 101),
-        ('DEVIKKU POOJA', 'ദേവിക്ക് പൂജ', 151), ('BHANESHI HOMAM', 'ബാണേശി ഹോമം', 1001), ('THRISHTUPP HOMAM', 'തൃഷ്‌ടുപ്പ് ഹോമം', 1001),
-        ('DEVIKKU THATTU', 'ദേവിക്ക് തട്ട്', 20), ('ELANEER ABHISHEKAM', 'ഇളനീർ അഭിഷേകം', 101), ('PANJAMRITHA ABHISHEKAM', 'പഞ്ചാമൃത അഭിഷേകം', 151),
-        ('PRATHYINGARA HOMAM', 'പ്രത്യംഗര ഹോമം', 1001), ('OTTAPPAM', 'ഒറ്റപ്പം', 201), ('NEY ABHISHEKAM', 'നെയ്യഭിഷേകം', 251),
-        ('BHASMABHISHEKAM', 'ഭസ്മാഭിഷേകം', 101), ('KARUKAMALA', 'കറുകമാല', 50), ('KALABHABHISHEKAM', 'കളഭാഭിഷേകം', 201),
-        ('AVAL NIVEDHYAM', 'അവൽ നിവേദ്യം', 50), ('VYAZHAM (GURU) POOJA', 'വ്യാഴം ( ഗുരു) പൂജ', 301),
-        ('MUNDANAM( VELSAMARPPANNAM, ARCHANATHATT, PALABHISHEKAM INCLUDED)', 'മുണ്ഡനം( വേൽസമർപ്പണം,അർച്ചനതട്ട്, പാലഭിഷേകം ഉൾപ്പെടെ)', 453),
-        ('JANMANAKSHATHRA(BIRTHDAY) POOJA', 'ജന്മനക്ഷത്ര പൂജ', 301), ('THRIMADHURAM', 'ത്രിമധുരം', 100), ('THUMADURAM', 'തുമാധുരം', 100),
-        ('VELLARINIVEDHYAM', 'വെള്ളരിനിവേദ്യം', 50), ('MURUKANU VEL SAMARPANAM', 'മുരുകന് വേൽ സമർപ്പണം', 101),
-        ('ARCHANATHATT', 'അർച്ചനത്തട്ട്', 50), ('MUTTIRAKKAL', 'മുട്ടിറക്കൽ', 50), ('VIVAHAM', 'വിവാഹം', 2500),
-        ('VIVAHAM (SPECIAL)', 'വിവാഹം (സ്പെഷ്യൽ)', 5000), ('VISHESHAL POOJA', 'വിശേഷാൽ പൂജ', 1500), ('CHUTTU VILLAKKU', 'ചുറ്റു വിളക്ക്', 1000),
-        ('AIKYAMATHYAM', 'ഐക്യമത്യം', 20), ('EZHUTHINIRUTHAL', 'എഴുത്തിനിരുത്തൽ', 151), ('ORU KUDAM PAALABHISHEKAM', 'ഒരു കുടം പാലഭിഷേകം', 500),
-        ('PANAKAM', 'പാനകം', 250), ('DIVASA POOJA', 'ദിവസ പൂജ', 500), ('KARPOORA AARATHI', 'കർപ്പൂര ആരതി', 50),
-        ('SHASHTI VRITHAM', 'ഷഷ്ടി വൃതം', 50), ('AAYURSOOKTHA PUSHPANJALI', 'ആയുർസൂക്ത പുഷ്പാഞ്ജലി', 50),
-        ('SUBRAMANYA KAVACHA PUSHPANJALI', 'സുബ്രമണ്യ കവച പുഷ്പാഞ്ജലി', 50), ('SUBRAMANYA STHOTHRA PUSHPANJALI', 'സുബ്രമണ്യ സ്തോത്ര പുഷ്പാഞ്ജലി', 50),
-        ('SAMVADHA SOOKTHA PUSHPANJALI', 'സംവാദ സൂക്ത പുഷ്പാഞ്ജലി', 20), ('KAVADIYENTHI PRADHAKSHINAM', 'കാവടിയേന്തി പ്രദക്ഷിണം', 101),
-        ('CHOROONU', 'ചോറൂണ്', 201), ('NEL PARA', 'നെൽപ്പറ', 151),
+        ('PUSHPANJALI', 'പുഷ്പാഞ്ജലി', 10),
+        ('DHAARA', 'ധാര', 50),
+        ('KSHEERA DHARA', 'ക്ഷീരധാര', 100),
+        ('NEERANJANAM', 'നീരാഞ്ജനം', 75),
+        
+        ('VELLA NIVEDHYAM', 'വെള്ള നിവേദ്യം', 50),
+        ('PAALPAYASAM', 'പാൽപ്പായസം', 100),
+        ('KOOTTU PAAYASAM', 'കൂട്ട് പായസം', 100),
+        ('PIZHINJU PAYASAM', 'പിഴിഞ്ഞു പായസം', 150),
+        ('KADUM PAYASAM', 'കടും പായസം', 150),
+        ('NEYY PAYASAM', 'നെയ് പായസം', 160),
+        ('ADA NIVEDHYAM', 'അട നിവേദ്യം', 150),
+        ('OTTAYAPPAM', 'ഒറ്റയപ്പം', 200),
+        ('THRIMADHURAM', 'ത്രിമധുരം', 75),
+        
+        ('THULABHARAM', 'തുലാഭാരം', 100),
+        ('CHOROONU', 'ചോറൂണ്', 200),
+        ('GANAPATHI HOMAM', 'ഗണപതി ഹോമം', 100),
+        ('ASHTA DRAVYA GANAPATHI HOMAM', 'അഷ്ടദ്രവ്യ ഗണപതി ഹോമം', 500),
+        ('KARUKA HOMAM', 'കറുക ഹോമം', 100),
+        ('MRITHYUNJAYA HOMAM', 'മൃത്യുഞ്ജയ ഹോമം', 1500),
+        
+        ('EZHUTHINU IRUTHAL', 'എഴുത്തിനു ഇരുത്തൽ', 30),
+        ('THAALI POOJA', 'താലി പൂജ', 10),
+        ('VIVAAHAM', 'വിവാഹം', 500),
+        ('PATTUM THALIYUM SAMARPPANAM', 'പട്ടും താലിയും സമർപ്പണം', 250),
+        ('KETTUNIRA', 'കെട്ടുനിറ', 20),
+        ('PAALOOTTU', 'പാലൂട്ട്', 30),
+        
+        ('PITHRU NAMASKARAM', 'പിതൃ നമസ്കാരം', 50),
+        ('KOOTTA NAMASKARAM', 'കൂട്ട നമസ്കാരം', 100),
+        
+        ('SATHRUSAMHARA PUSHPANJALI', 'ശത്രുസംഹാര പുഷ്പാഞ്ജലി', 30),
+        ('AAYURSOOKTHA PUSHPANJALI', 'ആയുർസൂക്ത പുഷ്പാഞ്ജലി', 30),
+        ('PURUSHASOOKTHA PUSHPANJALI', 'പുരുഷസൂക്ത പുഷ്പാഞ്ജലി', 30),
+        ('MRITHYUNJAYA PUSHPANJALI', 'മൃത്യുഞ്ജയ പുഷ്പാഞ്ജലി', 30),
+        ('SWAYAMVARA PUSHPANJALI', 'സ്വയംവര പുഷ്പാഞ്ജലി', 30),
+        ('BHAGYASOOKTHA PUSHPANJALI', 'ഭാഗ്യസൂക്ത പുഷ്പാഞ്ജലി', 30),
+        ('AKHORA MANTHRA PUSHPANJALI', 'അഘോര മന്ത്ര പുഷ്പാഞ്ജലി', 30),
+        ('UMAA MAHESWARA PUSHPANJALI', 'ഉമാമഹേശ്വര പുഷ്പാഞ്ജലി', 30),
+
+        ('SREE RUDHRAA MANTHRA ARCHANA', 'ശ്രീ രുദ്ര മന്ത്ര അർച്ചന', 30),
+        ('PAASUPATHA MANTHRA ARCHANA', 'പാശുപത മന്ത്ര അർച്ചന', 30),
+        ('VIDHYAGOPALA MANTRA ARCHANA', 'വിദ്യാഗോപാല മന്ത്ര അർച്ചന', 30),
+        ('SREE SOOKTHA ARCHANA', 'ശ്രീ സൂക്ത അർച്ചന', 30),
+        
+        ('AIKYAMATHYA SOOKTHAM', 'ഐക്യമത്യ സൂക്തം', 30),
+        ('SAMVADHASOOKTHAM', 'സംവാദസൂക്തം', 30),
+        
+        ('YAKSHIYAMMAKKU PAALPAYASAM', 'യക്ഷിയമ്മയ്ക്ക് പാൽപ്പായസം', 100),
+        ('BRAHMARAKSHASSINU PAALPAYASAM', 'ബ്രഹ്മരക്ഷസ്സിനു പാൽപ്പായസം', 100),
+        ('PATHMAM ITTU PAALPAYASAM', 'പത്മം ഇട്ട് പാൽപ്പായസം', 100),
+    
+        ('NOOTTONNU KUDAM DHAARA', 'നൂറ്റൊന്ന് കുടം ധാര', 301),
+        ('AAYIRAM KUDAM DHAARA', 'ആയിരം കുടം ധാര', 1500),
+        ('KARIKKABHISHEKAM', 'കരിക്കാഭിഷേകം', 75),
+        ('SANGHABHISHEKAM', 'ശംഖാഭിഷേകം', 150),
+        ('BHASMA ABHISHEKAM', 'ഭസ്മ അഭിഷേകം', 100),
+        
+        ('108 KOOVALA MALA KONDU MRITHYUNJAYAM', '108 കൂവളമാല കൊണ്ട് മൃത്യുഞ്ജയം', 101),
+        ('UMAA MAHESWARA POOJA', 'ഉമാമഹേശ്വര പൂജ', 250),
+        ('YAKSHIYAMMA POOJA', 'യക്ഷിയമ്മ പൂജ', 250),
+        ('JANMANAKSHATHRA POOJA', 'ജന്മനക്ഷത്ര പൂജ', 250),
+        ('ORU NERATHE POOJA', 'ഒരു നേരത്തെ പൂജ', 500),
+        ('ORU DHIVASATHE POOJA', 'ഒരു ദിവസത്തെ പൂജ', 1000),
+        
+        ('DHEEPARADHANA', 'ദീപാരാധന', 750),
+        ('CHUTTUVILAKKU', 'ചുറ്റുവിളക്ക്', 3500),
+        ('BHAGAVATHI SEVA', 'ഭഗവതി സേവ', 400),
+        ('VAAHANA POOJA 4 WHEELER', 'വാഹന പൂജ 4 വീലർ', 500),
+        ('VAAHANA POOJA 2 WHEELER', 'വാഹന പൂജ 2 വീലർ', 250),
     ]
     
     for english_name, malayalam_name, rate_rupees in poojas_data:
@@ -139,23 +171,15 @@ def seed_all():
     
     # Create sample inventory items
     inventory_data = [
-        ('കർപ്പൂരം ', 'Pooja Items', 'nos', 55.0, 15.0, 'Kerala Pooja Traders', 25, 30),
-        ('ചന്ദനത്തിരി ', 'Pooja Items', 'nos', 30.0, 20.0, 'Divine Supplies', 8, 10),
-        ('ചന്ദനം', 'Pooja Items', 'nos', 2.0, 50.0, 'Temple Essentials Co', 100, 150),
-        ('കുങ്കുമം', 'Pooja Items', 'nos', 1.0, 100.0, 'Shakti Traders', 50, 60),
-        ('തുളസി ഇല', 'Pooja Items', 'bundle', 10.0, 25.0, 'Local Farmers', 30, 50),
-        ('കൂവളം ഇല', 'Pooja Items', 'bundle', 12.0, 20.0, 'Green Leaf Suppliers', 25, 45),
-        ('പൂവ്', 'Pooja Items', 'nos', 80.0, 30.0, 'Flower Market Co', 120, 180),
-        ('നെയ്', 'Pooja Items', 'nos', 60.0, 10.0, 'Pure Ghee Traders', 500, 650),
-        ('നെയ് വിളക്ക്', 'Pooja Items', 'nos', 60.0, 10.0, 'Pure Ghee Traders', 10, 15),
-        ('തേങ്ങ', 'Pooja Items', 'nos', 25.0, 50.0, 'Coconut Suppliers', 30, 45),
-        ('വാഴപ്പഴം', 'Pooja Items', 'nos', 40.0, 20.0, 'Fruit Vendors', 60, 90),
-        ('വിളക്ക് തിരി', 'Pooja Items', 'nos', 20.0, 30.0, 'Lamp Accessories Ltd', 25, 40),
-        ('എള്ളെണ്ണ', 'Pooja Items', 'nos', 70.0, 15.0, 'Oil Mills Co', 200, 280),
-        ('എള്ളെണ്ണ 1L', 'Pooja Items', 'nos', 70.0, 15.0, 'Oil Mills Co', 200, 280),
-        ('തെങ്ങെണ്ണ', 'Pooja Items', 'nos', 65.0, 15.0, 'Kerala Oils', 180, 250),
-        ('പഞ്ചാമൃതം', 'Pooja Items', 'nos', 50.0, 10.0, 'Temple Mix Suppliers', 300, 420),
-        ('അവൽ', 'Pooja Items', 'kg', 35.0, 25.0, 'Grain Suppliers', 70, 110)
+        
+        ('എണ്ണ ', 'Pooja Items', 'nos', 100.0, 100.0, 'Kerala Pooja Traders', 10, 10),
+        ('എള്ളുതിരി ', 'Pooja Items', 'nos', 1000.0, 20.0, 'Divine Supplies', 8, 10),
+        ('ചന്ദനത്തിരി', 'Pooja Items', 'nos', 20.0, 100.0, 'Temple Essentials Co', 10, 10),
+        ('കർപ്പൂരം', 'Pooja Items', 'nos', 50.0, 10.0, 'Shakti Traders', 10, 10),
+        ('മാല', 'Pooja Items', 'bundle', 50.0, 25.0, 'Local Farmers', 20, 20),
+        ('നെയ്യ്‌വിളക്ക്', 'Pooja Items', 'nos', 50.0, 10.0, 'Green Leaf Suppliers', 30, 30),
+        ('നാളികേരം', 'Pooja Items', 'nos', 100.0, 20.0, 'Flower Market Co', 50, 50)
+                
     ]
     
     for name, cat, unit, stock, reorder, supplier, cost, selling in inventory_data:
@@ -177,7 +201,7 @@ def seed_all():
     # Create sample devotees
     devotees_data = [
         (
-            'Sooraj ER',
+            'Sooraj',
             'ഉത്രാടം',
             '+91 9746199209',
             'sooraj@email.com',
