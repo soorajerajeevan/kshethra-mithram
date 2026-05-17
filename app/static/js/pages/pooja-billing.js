@@ -146,7 +146,7 @@ function initPoojaRowSearchables(index) {
         valueField: 'id',
         labelField: 'name',
         searchField: ['english_name', 'id', 'malayalam_name'],
-        options: poojas,
+        options: poojas.map(({ $id, $order, ...p }) => p),
         create: false,
         onChange: function () {
             updatePoojaPrice(index);
@@ -157,7 +157,7 @@ function initPoojaRowSearchables(index) {
         valueField: 'malayalam_name',
         labelField: 'display_name',
         searchField: ['english_name', 'id', 'malayalam_name'],
-        options: nakshathrams.map(n => ({ id: n.id, english_name: n.english_name, malayalam_name: n.malayalam_name, display_name: n.id + ' - ' + n.malayalam_name })),
+        options: nakshathrams.map(({ $id, $order, ...n }) => ({ id: n.id, english_name: n.english_name, malayalam_name: n.malayalam_name, display_name: n.id + ' - ' + n.malayalam_name })),
         placeholder: 'Nakshathram',
         create: false,
         onChange: function () {
