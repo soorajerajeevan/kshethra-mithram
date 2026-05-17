@@ -46,7 +46,7 @@ fi
 echo "Starting pull-based deploy for branch=${BRANCH}"
 
 cd "${APP_DIR}"
-preflight_git_permissions()
+preflight_git_permissions
 
 git fetch --prune origin "${BRANCH}"
 TARGET_COMMIT="$(git rev-parse "origin/${BRANCH}")"
