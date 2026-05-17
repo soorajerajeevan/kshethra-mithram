@@ -65,6 +65,7 @@ function initializeSearchables() {
         valueField: 'id',
         labelField: 'display_name',
         searchField: ['full_name', 'phone', 'family_name'],
+        createOnBlur: true,
         create: function (input) {
             const name = (input || '').trim();
             if (!name) return false;
@@ -72,7 +73,7 @@ function initializeSearchables() {
                 id: 0, // Temporary ID for new devotee
                 display_name: `${name} (New devotee)`,
                 full_name: name,
-                family_members: [{ id:0, name: name, nakshathram: '' }]
+                family_members: [{ id: 0, name: name, nakshathram: '' }]
             };
             updateFamilyMemberOptions(0);
             return selectedDevotee;
@@ -160,7 +161,7 @@ function initPoojaRowSearchables(index) {
         placeholder: 'Nakshathram',
         create: false,
         onChange: function () {
-            // updateStarForFamilyMembers(index);
+            updateStarForFamilyMembers(index);
         }
     });
 
@@ -170,20 +171,20 @@ function initPoojaRowSearchables(index) {
         searchField: ['name'],
         placeholder: 'Family member name',
         options: familyMembers.map(m => ({ ...m })),
+        createOnBlur: true,
         create: function (input) {
             console.log("Creating new member", input)
             const name = (input || '').trim();
             if (!name) return false;
             const newMem = {
-                id: familyMembers.length > 0 ? Math.max(...familyMembers.map(m => m.id)) + 1 : 1, 
+                id: familyMembers.length > 0 ? Math.max(...familyMembers.map(m => Number(m.id))) + 1 : 1,
                 name: name,
             };
             familyMembers.push(newMem);
             return newMem;
         },
         onChange: function () {
-            // console.log("Family member changed for index " + index, 'value :', document.querySelector('#pooja_devotee_name_0').value);
-            // prefillNakshathramFromFamily(index);
+            prefillNakshathramFromFamily(index);
         }
     });
     if (poojaTs) {
@@ -212,34 +213,33 @@ function updateEditDevoteeButton(id) {
 }
 
 function prefillNakshathramFromFamily(index) {
-    console.log("Prefilling nakshathram for family member change in index " + index, document.querySelector('#pooja_devotee_name_0').value);
     const nakshSelect = tomSelectInstances[`nakshathram_${index}`];
     const familySelect = tomSelectInstances[`family_${index}`];
     if (!nakshSelect || !familySelect) return;
     const familyMemberName = familySelect.getValue();
-    nakshSelect.setValue(''); // Clear nakshathram when family member change
     nakshSelect.setValue(familyMembers.find(m => m.name === familyMemberName)?.nakshathram || '', true);
 }
-let isRefreshing = false;
 
 function updateStarForFamilyMembers(index) {
     const nakshSelect = tomSelectInstances[`nakshathram_${index}`];
-    if (!nakshSelect || isRefreshing) return;
-    isRefreshing = true;
-    const familyMemberNakshathram = nakshSelect.getValue();
-    Object.entries(tomSelectInstances).forEach(([key, instance]) => {
-        if (key.startsWith("family_") && key != "family_" + index) {
-            const familyMemberName = instance.getValue();
-            console.log("Checking star change for ", key, familyMemberName)
-            const member = familyMembers.find(m => m.name === familyMemberName);
-            if (member) {
-                member.nakshathram = String(familyMemberNakshathram);
-                instance.refreshOptions(true);
-                instance.refreshItems();
-            }
+    const familySelect = tomSelectInstances[`family_${index}`];
+    if (!nakshSelect) return;
+    const newNakshathram = nakshSelect.getValue();
+    familyMembers.forEach(m => {
+        if (m.name === familySelect.getValue()) {
+            m.nakshathram = String(newNakshathram);
         }
-        isRefreshing = false
     });
+    Object.entries(tomSelectInstances)
+        .filter(([key]) => key.startsWith("family_") && key != "family_" + index)
+        .forEach(([key, instance]) => {
+            if (instance.getValue() == familySelect.getValue()) {
+                // Update Nakshathram for index
+                const index = key.split('_')[1];
+                const updatingNaksh = tomSelectInstances[`nakshathram_${index}`];
+                updatingNaksh.setValue(nakshSelect.getValue(), true);
+            }
+        });
 
 }
 
@@ -271,11 +271,11 @@ function addPoojaItem() {
         <div class="col-md-2">
             <select name="pooja_devotee_name_${poojaCounter}" id="pooja_devotee_name_${poojaCounter}" class="form-select form-select-sm" required></select>
         </div>
-        <div class="col-md-1">
+        <div class="col-md-2">
             <select name="pooja_nakshathram_${poojaCounter}" id="pooja_nakshathram_${poojaCounter}" class="form-select form-select-sm" required></select>
         </div>
         <div class="col-md-1"><input type="date" name="pooja_date_${poojaCounter}" id="pooja_date_${poojaCounter}" class="form-control form-control-sm" required></div>
-        <div class="col-md-2"><input type="text" name="pooja_notes_${poojaCounter}" id="pooja_notes_${poojaCounter}" class="form-control form-control-sm" placeholder="Notes (optional)"></div>
+        <div class="col-md-1"><input type="text" name="pooja_notes_${poojaCounter}" id="pooja_notes_${poojaCounter}" class="form-control form-control-sm" placeholder="Notes (optional)"></div>
         <div class="col-md-1"><input type="number" name="pooja_quantity_${poojaCounter}" id="pooja_quantity_${poojaCounter}" class="form-control form-control-sm" value="1" step="1" min="1" onchange="calculateTotal()" required></div>
         <div class="col-md-1"><input type="number" name="pooja_price_${poojaCounter}" id="pooja_price_${poojaCounter}" class="form-control form-control-sm" step="1" min="0" placeholder="Price" onchange="calculateTotal()" required></div>
          <div class="col-md-1 d-flex justify-content-center">        

@@ -304,8 +304,6 @@ def bookings_add():
             if not new_name:
                 errors.append('New devotee name cannot be empty.')
             new_phone = (request.form.get('new_devotee_phone') or '').strip()
-            if not new_phone:
-                errors.append('Phone number is required for a new devotee.')
         if errors:
             for err in errors:
                 flash(err, 'danger')

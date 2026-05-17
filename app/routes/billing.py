@@ -130,9 +130,6 @@ def validate_new_bill_form(form):
     elif devotee_id == '0':        
         if not devotee_name:
             errors.append('New devotee name cannot be empty.')
-        new_phone = (form.get('new_devotee_phone') or '').strip()
-        if not new_phone:
-            errors.append('Phone number is required for a new devotee.')
     else:
         if devotee_name.isdigit() or not devotee_id.isdigit:
             errors.append('Invalid devotee selection.')
