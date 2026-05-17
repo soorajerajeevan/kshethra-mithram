@@ -6,8 +6,8 @@ LINE_WIDTH = 64
 ITEM_WIDTH = 40
 QTY_WIDTH = 5
 AMT_WIDTH = 14
-TOTAL_LABEL_WIDTH = 50
-TOTAL_VALUE_WIDTH = 18
+TOTAL_LABEL_WIDTH = 40
+TOTAL_VALUE_WIDTH = 24
 PAGE_WIDTH_PX = 576
 SIDE_PADDING_PX = 5
 CONTENT_WIDTH_PX = PAGE_WIDTH_PX - (SIDE_PADDING_PX * 2)
@@ -157,6 +157,8 @@ def build_receipt_lines(bill, temple_name, temple_address, temple_phone, receipt
     add(eq, "divider-strong")
     if bill.payment_mode:
         add(_kv_line("Payment Mode:", bill.payment_mode, LINE_WIDTH), "meta")
+    if bill.notes:
+        add(_kv_line("Notes:", bill.notes, LINE_WIDTH), "meta")
     if bill.payment_reference:
         ref = bill.payment_reference or ""
         for i in range(0, len(ref), LINE_WIDTH - 11):

@@ -7,6 +7,7 @@ import argparse
 import os
 import subprocess
 import time
+from datetime import datetime
 from pathlib import Path
 
 
@@ -35,8 +36,9 @@ def compute_ci_version(base_version: str, commit_sha: str) -> str:
 
 
 def compute_deploy_version(base_version: str, commit_sha: str) -> str:
-    unix_ts = int(time.time())
-    return f"{base_version}.{short_commit_id(commit_sha)}"
+    now = datetime.now()
+    date_time_str = now.strftime("%d-%m | %H:%M")
+    return f"{base_version}.{short_commit_id(commit_sha)} | {date_time_str}"
 
 
 def find_repo_root(start: Path) -> Path:
