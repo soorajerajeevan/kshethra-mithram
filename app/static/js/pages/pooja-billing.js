@@ -65,6 +65,7 @@ function initializeSearchables() {
         valueField: 'id',
         labelField: 'display_name',
         searchField: ['full_name', 'phone', 'family_name'],
+        createOnBlur: true,
         create: function (input) {
             const name = (input || '').trim();
             if (!name) return false;
@@ -72,7 +73,7 @@ function initializeSearchables() {
                 id: 0, // Temporary ID for new devotee
                 display_name: `${name} (New devotee)`,
                 full_name: name,
-                family_members: [{ name: name, nakshathram: '' }]
+                family_members: [{ id: 0, name: name, nakshathram: '' }]
             };
             updateFamilyMemberOptions(0);
             return selectedDevotee;
@@ -99,26 +100,24 @@ function getSelectedPrimaryDevotee() {
 }
 
 function updateFamilyMemberOptions(devoteeId) {
-    console.log("Selected Devotee for "+ devoteeId, selectedDevotee)
     if (selectedDevotee) {
         if (selectedDevotee.family_members.size == 0)
             familyMembers = [{ name: selectedDevotee.full_name, nakshathram: selectedDevotee.nakshatra }];
         else
             familyMembers = selectedDevotee.family_members.map(m => ({ name: m.name, nakshathram: m.nakshathram }));
     }
-    console.trace("Refreshing family member options for all pooja rows. Family " + devoteeId + " members:", familyMembers);
     Object.keys(tomSelectInstances)
         .filter(key => key.startsWith('family_'))
         .forEach(key => {
             const ts = tomSelectInstances[key];
             ts.clearOptions();
-
             familyMembers.forEach(m => {
-                ts.addOption(m);
+                const { $id, $order, ...clean } = m; ts.addOption(clean);
             });
             if (key === 'family_0' && selectedDevotee) {
                 ts.setValue(selectedDevotee.full_name, false);
             }
+            ts.refreshItems
         });
 }
 
@@ -131,15 +130,14 @@ function toggleNewDevoteePhone(value) {
     const isNew = value == 0;
     if (isNew) {
         wrap.classList.remove('d-none');
-        phone.required = true;
     } else {
         wrap.classList.add('d-none');
-        phone.required = false;
         phone.value = '';
     }
 }
 
 function initPoojaRowSearchables(index) {
+    console.log("Initializing searchables for pooja row index " + index);
     const poojaSelector = `#pooja_service_${index}`;
     const familySelector = `#pooja_devotee_name_${index}`;
     const nakshSelector = `#pooja_nakshathram_${index}`;
@@ -163,7 +161,7 @@ function initPoojaRowSearchables(index) {
         placeholder: 'Nakshathram',
         create: false,
         onChange: function () {
-            // updateStarForFamilyMembers(index);
+            updateStarForFamilyMembers(index);
         }
     });
 
@@ -172,17 +170,16 @@ function initPoojaRowSearchables(index) {
         labelField: 'name',
         searchField: ['name'],
         placeholder: 'Family member name',
-        options: familyMembers,
+        options: familyMembers.map(({ $id, $order, ...m }) => m),
+        createOnBlur: true,
         create: function (input) {
-            console.log("Creating new member", input)
             const name = (input || '').trim();
             if (!name) return false;
-            const newMem = {
-                id: 0, // Temporary ID for new devotee
+            const newMem = {                
                 name: name,
             };
             familyMembers.push(newMem);
-            return newMem;
+            return { ...newMem };
         },
         onChange: function () {
             prefillNakshathramFromFamily(index);
@@ -218,29 +215,29 @@ function prefillNakshathramFromFamily(index) {
     const familySelect = tomSelectInstances[`family_${index}`];
     if (!nakshSelect || !familySelect) return;
     const familyMemberName = familySelect.getValue();
-    nakshSelect.setValue(''); // Clear nakshathram when family member change
     nakshSelect.setValue(familyMembers.find(m => m.name === familyMemberName)?.nakshathram || '', true);
 }
-let isRefreshing = false;
 
 function updateStarForFamilyMembers(index) {
     const nakshSelect = tomSelectInstances[`nakshathram_${index}`];
-    if (!nakshSelect || isRefreshing) return;
-    isRefreshing = true;
-    const familyMemberNakshathram = nakshSelect.getValue();
-    Object.entries(tomSelectInstances).forEach(([key, instance]) => {
-        if (key.startsWith("family_") && key != "family_" + index) {
-            const familyMemberName = instance.getValue();
-            console.log("Checking star change for ", key, familyMemberName)
-            const member = familyMembers.find(m => m.name === familyMemberName);
-            if (member) {
-                member.nakshathram = String(familyMemberNakshathram);
-                instance.refreshOptions(true);
-                instance.refreshItems();
-            }
+    const familySelect = tomSelectInstances[`family_${index}`];
+    if (!nakshSelect) return;
+    const newNakshathram = nakshSelect.getValue();
+    familyMembers.forEach(m => {
+        if (m.name === familySelect.getValue()) {
+            m.nakshathram = String(newNakshathram);
         }
-        isRefreshing = false
     });
+    Object.entries(tomSelectInstances)
+        .filter(([key]) => key.startsWith("family_") && key != "family_" + index)
+        .forEach(([key, instance]) => {
+            if (instance.getValue() == familySelect.getValue()) {
+                // Update Nakshathram for index
+                const index = key.split('_')[1];
+                const updatingNaksh = tomSelectInstances[`nakshathram_${index}`];
+                updatingNaksh.setValue(nakshSelect.getValue(), true);
+            }
+        });
 
 }
 
@@ -272,11 +269,11 @@ function addPoojaItem() {
         <div class="col-md-2">
             <select name="pooja_devotee_name_${poojaCounter}" id="pooja_devotee_name_${poojaCounter}" class="form-select form-select-sm" required></select>
         </div>
-        <div class="col-md-1">
+        <div class="col-md-2">
             <select name="pooja_nakshathram_${poojaCounter}" id="pooja_nakshathram_${poojaCounter}" class="form-select form-select-sm" required></select>
         </div>
         <div class="col-md-1"><input type="date" name="pooja_date_${poojaCounter}" id="pooja_date_${poojaCounter}" class="form-control form-control-sm" required></div>
-        <div class="col-md-2"><input type="text" name="pooja_notes_${poojaCounter}" id="pooja_notes_${poojaCounter}" class="form-control form-control-sm" placeholder="Notes (optional)"></div>
+        <div class="col-md-1"><input type="text" name="pooja_notes_${poojaCounter}" id="pooja_notes_${poojaCounter}" class="form-control form-control-sm" placeholder="Notes (optional)"></div>
         <div class="col-md-1"><input type="number" name="pooja_quantity_${poojaCounter}" id="pooja_quantity_${poojaCounter}" class="form-control form-control-sm" value="1" step="1" min="1" onchange="calculateTotal()" required></div>
         <div class="col-md-1"><input type="number" name="pooja_price_${poojaCounter}" id="pooja_price_${poojaCounter}" class="form-control form-control-sm" step="1" min="0" placeholder="Price" onchange="calculateTotal()" required></div>
          <div class="col-md-1 d-flex justify-content-center">        
@@ -297,11 +294,6 @@ function addPoojaItem() {
         el.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
-                addPoojaItem();
-                const nextInput = document.getElementById(`pooja_service_${poojaCounter - 1}`);
-                if (nextInput && nextInput.tomselect) {
-                    nextInput.tomselect.focus();
-                }
             }
         });
     });
@@ -538,16 +530,6 @@ getToday = () => {
 
 document.getElementById('billForm').addEventListener('submit', function (event) {
 
-    const devoteeName = document.getElementById('devotee_name').value || '';
-    const devoteeId = document.getElementById('devotee_id').value || '';
-    const phoneEl = document.getElementById('new_devotee_phone');
-    const phone = phoneEl ? (phoneEl.value || '').trim() : '';
-    if (devoteeId == 0 && !phone) {
-        event.preventDefault();
-        alert('Please enter phone number for new devotee.');
-        return;
-    }
-
     const invalidFields = this.querySelectorAll(':invalid');
 
     if (invalidFields.length > 0) {
@@ -564,7 +546,7 @@ document.getElementById('billForm').addEventListener('submit', function (event) 
 
         // Focus first invalid field
         invalidFields[0].focus();
-        
+
         // Prevent submit
         event.preventDefault();
     }
