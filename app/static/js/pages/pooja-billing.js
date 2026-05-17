@@ -112,7 +112,7 @@ function updateFamilyMemberOptions(devoteeId) {
             const ts = tomSelectInstances[key];
             ts.clearOptions();
             familyMembers.forEach(m => {
-                ts.addOption({ ...m });
+                const { $id, $order, ...clean } = m; ts.addOption(clean);
             });
             if (key === 'family_0' && selectedDevotee) {
                 ts.setValue(selectedDevotee.full_name, false);
@@ -170,18 +170,16 @@ function initPoojaRowSearchables(index) {
         labelField: 'name',
         searchField: ['name'],
         placeholder: 'Family member name',
-        options: familyMembers.map(m => ({ ...m })),
+        options: familyMembers.map(({ $id, $order, ...m }) => m),
         createOnBlur: true,
         create: function (input) {
-            console.log("Creating new member", input)
             const name = (input || '').trim();
             if (!name) return false;
-            const newMem = {
-                id: familyMembers.length > 0 ? Math.max(...familyMembers.map(m => Number(m.id))) + 1 : 1,
+            const newMem = {                
                 name: name,
             };
             familyMembers.push(newMem);
-            return newMem;
+            return { ...newMem };
         },
         onChange: function () {
             prefillNakshathramFromFamily(index);
