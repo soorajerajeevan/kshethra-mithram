@@ -72,7 +72,7 @@ function initializeSearchables() {
                 id: 0, // Temporary ID for new devotee
                 display_name: `${name} (New devotee)`,
                 full_name: name,
-                family_members: [{ name: name, nakshathram: '' }]
+                family_members: [{ id:0, name: name, nakshathram: '' }]
             };
             updateFamilyMemberOptions(0);
             return selectedDevotee;
@@ -99,26 +99,24 @@ function getSelectedPrimaryDevotee() {
 }
 
 function updateFamilyMemberOptions(devoteeId) {
-    console.log("Selected Devotee for "+ devoteeId, selectedDevotee)
     if (selectedDevotee) {
         if (selectedDevotee.family_members.size == 0)
             familyMembers = [{ name: selectedDevotee.full_name, nakshathram: selectedDevotee.nakshatra }];
         else
             familyMembers = selectedDevotee.family_members.map(m => ({ name: m.name, nakshathram: m.nakshathram }));
     }
-    console.trace("Refreshing family member options for all pooja rows. Family " + devoteeId + " members:", familyMembers);
     Object.keys(tomSelectInstances)
         .filter(key => key.startsWith('family_'))
         .forEach(key => {
             const ts = tomSelectInstances[key];
             ts.clearOptions();
-
             familyMembers.forEach(m => {
-                ts.addOption(m);
+                ts.addOption({ ...m });
             });
             if (key === 'family_0' && selectedDevotee) {
                 ts.setValue(selectedDevotee.full_name, false);
             }
+            ts.refreshItems
         });
 }
 
@@ -131,15 +129,14 @@ function toggleNewDevoteePhone(value) {
     const isNew = value == 0;
     if (isNew) {
         wrap.classList.remove('d-none');
-        phone.required = true;
     } else {
         wrap.classList.add('d-none');
-        phone.required = false;
         phone.value = '';
     }
 }
 
 function initPoojaRowSearchables(index) {
+    console.log("Initializing searchables for pooja row index " + index);
     const poojaSelector = `#pooja_service_${index}`;
     const familySelector = `#pooja_devotee_name_${index}`;
     const nakshSelector = `#pooja_nakshathram_${index}`;
@@ -172,20 +169,21 @@ function initPoojaRowSearchables(index) {
         labelField: 'name',
         searchField: ['name'],
         placeholder: 'Family member name',
-        options: familyMembers,
+        options: familyMembers.map(m => ({ ...m })),
         create: function (input) {
             console.log("Creating new member", input)
             const name = (input || '').trim();
             if (!name) return false;
             const newMem = {
-                id: 0, // Temporary ID for new devotee
+                id: familyMembers.length > 0 ? Math.max(...familyMembers.map(m => m.id)) + 1 : 1, 
                 name: name,
             };
             familyMembers.push(newMem);
             return newMem;
         },
         onChange: function () {
-            prefillNakshathramFromFamily(index);
+            // console.log("Family member changed for index " + index, 'value :', document.querySelector('#pooja_devotee_name_0').value);
+            // prefillNakshathramFromFamily(index);
         }
     });
     if (poojaTs) {
@@ -214,6 +212,7 @@ function updateEditDevoteeButton(id) {
 }
 
 function prefillNakshathramFromFamily(index) {
+    console.log("Prefilling nakshathram for family member change in index " + index, document.querySelector('#pooja_devotee_name_0').value);
     const nakshSelect = tomSelectInstances[`nakshathram_${index}`];
     const familySelect = tomSelectInstances[`family_${index}`];
     if (!nakshSelect || !familySelect) return;
@@ -297,11 +296,6 @@ function addPoojaItem() {
         el.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
-                addPoojaItem();
-                const nextInput = document.getElementById(`pooja_service_${poojaCounter - 1}`);
-                if (nextInput && nextInput.tomselect) {
-                    nextInput.tomselect.focus();
-                }
             }
         });
     });
@@ -538,16 +532,6 @@ getToday = () => {
 
 document.getElementById('billForm').addEventListener('submit', function (event) {
 
-    const devoteeName = document.getElementById('devotee_name').value || '';
-    const devoteeId = document.getElementById('devotee_id').value || '';
-    const phoneEl = document.getElementById('new_devotee_phone');
-    const phone = phoneEl ? (phoneEl.value || '').trim() : '';
-    if (devoteeId == 0 && !phone) {
-        event.preventDefault();
-        alert('Please enter phone number for new devotee.');
-        return;
-    }
-
     const invalidFields = this.querySelectorAll(':invalid');
 
     if (invalidFields.length > 0) {
@@ -564,7 +548,7 @@ document.getElementById('billForm').addEventListener('submit', function (event) 
 
         // Focus first invalid field
         invalidFields[0].focus();
-        
+
         // Prevent submit
         event.preventDefault();
     }
