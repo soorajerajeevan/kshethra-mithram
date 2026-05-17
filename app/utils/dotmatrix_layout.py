@@ -174,7 +174,6 @@ def build_receipt_lines(bill, temple_name, temple_address, temple_phone, receipt
     add(sep, "divider")
     return lines
 
-
 def normalize_layout_config(raw_value):
     default_config = {"version": 1, "lineAdjustments": {}, "wordAdjustments": {}, "dividers": []}
     if not raw_value:
