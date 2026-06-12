@@ -2,6 +2,18 @@
 
 A comprehensive web-based application for managing temple operations including billing, devotee management, pooja scheduling, inventory tracking, and financial reporting.
 
+## Docker commands
+```
+sudo docker build -t kshethramithram .
+
+sudo docker tag kshethramithram ghcr.io/soorajerajeevan/kshethramithram:v1.0.2
+sudo docker tag kshethramithram ghcr.io/soorajerajeevan/kshethramithram:latest
+
+sudo docker push ghcr.io/soorajerajeevan/kshethramithram:v1.0.2
+sudo docker push ghcr.io/soorajerajeevan/kshethramithram:latest
+```
+
+
 ## Features
 
 ### 🙏 Core Modules

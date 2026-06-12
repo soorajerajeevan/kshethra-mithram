@@ -63,4 +63,8 @@ if __name__ == '__main__':
     
     # Otherwise, run the Flask development server
     debug = app.config.get('DEBUG', False)
+    
+    # Never allow debug in production
+    if os.getenv('FLASK_CONFIG') == 'production':
+        debug = False
     app.run(host='0.0.0.0', port=5000, debug=debug, use_reloader=False)
